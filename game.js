@@ -1,4 +1,4 @@
-/* ATLAS UA 1.6 — a LOCAL fictional air-alert simulator.
+/* ATLAS UA 1.7 — a LOCAL fictional air-alert simulator.
    Never uses real alerts, real-time intelligence, or operational weapon data.
    All values are browser-local and not shared between visitors. */
 'use strict';
@@ -13,13 +13,13 @@
    simIntro:'Вигадана навчальна симуляція. Не показує реальних тривог.',redCounterLabel:'ЧЕРВОНИЙ',yellowCounterLabel:'ЖОВТИЙ',totalCounterLabel:'РАЙОНИ',
    modeManual:'Ручний',modeAuto:'Авто',simTargetCaption:'ОБРАНІ РАЙОНИ',none:'Оберіть район на мапі або в пошуку',
    labelLevelOff:'Зняти',labelLevelYellow:'Жовтий',labelLevelRed:'Червоний',simHint:'Виберіть район для керування тривогою.',
-   hintSelected:'Ctrl + клік: вибрати кілька районів. Зміна застосовується до всіх.',hintAuto:'Автоматичний ігровий сценарій активний. Для ручного керування оберіть «Ручний».',
-   simClockLabel:'ІГРОВИЙ ЧАС',simSpeedLabel:'Швидкість · 1× = 3 хв / 1 реальна хв',simRandomLabel:'Випадковий район',simResetLabel:'Скинути',
+   hintSelected:'Ctrl + клік: вибрати кілька районів. Зміна застосовується до всіх.',hintAuto:'Авто: виділіть райони та натисніть «Запустити сценарій». Випадкових тривог немає.',
+   simClockLabel:'ІГРОВИЙ ЧАС',simSpeedLabel:'Швидкість · 1× = 3 хв / 1 реальна хв',simRandomLabel:'▶ Запустити сценарій',simResetLabel:'Скинути',
    gameSearchLabel:'ШВИДКИЙ ПОШУК РАЙОНУ',gameSearchPlaceholder:'Назва району…',gameNoMatches:'Не знайдено',tabGame:'Симуляція',tabGeography:'Географія',simLogHeading:'ЖУРНАЛ ПОДІЙ',mapAlertLabel:'ІГРОВІ ТРИВОГИ',autoIndicator:'АВТО',manualIndicator:'РУЧНИЙ',
    simPause:'Пауза',simPlay:'Продовжити',simEmptyLog:'Поки немає подій. Оберіть район і змініть рівень.',
    confirmTitle:'Скинути симуляцію?',confirmDetail:'Усі навчальні тривоги, події та ігровий час будуть скинуті.',confirmCancel:'Скасувати',confirmAccept:'Скинути',
    reasonManual:'вручну',reasonAuto:'автоматично',levelOff:'тривогу знято',levelYellow:'жовтий рівень',levelRed:'червоний рівень',
-   modeSetAuto:'Запущено автоматичний сценарій',modeSetManual:'Увімкнено ручний режим',resume:'Час відновлено',pause:'Час призупинено',
+   modeSetAuto:'Автоматичний режим увімкнено (без випадкових подій)',modeSetManual:'Увімкнено ручний режим',resume:'Час відновлено',pause:'Час призупинено',
    reset:'Симуляцію скинуто',defaultRegion:'Україна',demo:'ДЕМО · НЕ РЕАЛЬНІ ТРИВОГИ'
   },
   ru:{
@@ -27,17 +27,17 @@
    simIntro:'Вымышленная учебная симуляция. Не показывает реальные тревоги.',redCounterLabel:'КРАСНЫЙ',yellowCounterLabel:'ЖЁЛТЫЙ',totalCounterLabel:'РАЙОНЫ',
    modeManual:'Ручной',modeAuto:'Авто',simTargetCaption:'ВЫБРАННЫЕ РАЙОНЫ',none:'Выбери район на карте или в поиске',
    labelLevelOff:'Снять',labelLevelYellow:'Жёлтый',labelLevelRed:'Красный',simHint:'Выбери район для управления тревогой.',
-   hintSelected:'Ctrl + клик: выбери несколько районов. Уровень изменится для всех.',hintAuto:'Запущен автоматический игровой сценарий. Для ручного управления выбери «Ручной».',
-   simClockLabel:'ИГРОВОЕ ВРЕМЯ',simSpeedLabel:'Скорость · 1× = 3 мин / 1 реальная мин',simRandomLabel:'Случайный район',simResetLabel:'Сбросить',
+   hintSelected:'Ctrl + клик: выбери несколько районов. Уровень изменится для всех.',hintAuto:'Авто: выдели районы и нажми «Запустить сценарий». Случайных тревог нет.',
+   simClockLabel:'ИГРОВОЕ ВРЕМЯ',simSpeedLabel:'Скорость · 1× = 3 мин / 1 реальная мин',simRandomLabel:'▶ Запустить сценарий',simResetLabel:'Сбросить',
    gameSearchLabel:'БЫСТРЫЙ ПОИСК РАЙОНА',gameSearchPlaceholder:'Название района…',gameNoMatches:'Не найдено',tabGame:'Симуляция',tabGeography:'География',simLogHeading:'ЖУРНАЛ СОБЫТИЙ',mapAlertLabel:'ИГРОВЫЕ ТРЕВОГИ',autoIndicator:'АВТО',manualIndicator:'РУЧНОЙ',
    simPause:'Пауза',simPlay:'Продолжить',simEmptyLog:'Пока нет событий. Выбери район и измени уровень.',
    confirmTitle:'Сбросить симуляцию?',confirmDetail:'Все учебные тревоги, события и игровое время будут сброшены.',confirmCancel:'Отмена',confirmAccept:'Сбросить',
    reasonManual:'вручную',reasonAuto:'автоматически',levelOff:'тревога снята',levelYellow:'жёлтый уровень',levelRed:'красный уровень',
-   modeSetAuto:'Запущен автоматический сценарий',modeSetManual:'Включён ручной режим',resume:'Время возобновлено',pause:'Время остановлено',
+   modeSetAuto:'Автоматический режим включён (без случайных событий)',modeSetManual:'Включён ручной режим',resume:'Время возобновлено',pause:'Время остановлено',
    reset:'Симуляция сброшена',defaultRegion:'Украина',demo:'ДЕМО · НЕ РЕАЛЬНЫЕ ТРЕВОГИ'
   }
  };
- const state={levels:new Map(),started:new Map(),mode:'manual',speed:1,paused:false,time:0,events:[],nextEvent:12,allFeatures:[]};
+ const state={levels:new Map(),started:new Map(),mode:'manual',speed:1,paused:false,time:0,events:[],nextEvent:12,allFeatures:[],scenario:null};
  let selected=[], language=api.getLanguage(), lastClock=-1, lastTick=performance.now();
  function tr(){return words[language]||words.uk;}
  function formatTime(total){
@@ -62,6 +62,17 @@
    if(typeof data.paused==='boolean')state.paused=data.paused;
    if(Number.isFinite(data.time)&&data.time>=0&&data.time<100000000)state.time=data.time;
    if(Array.isArray(data.events))state.events=data.events.filter(e=>e&&typeof e==='object'&&Number.isFinite(e.time)).slice(-24);
+   // Migration from 1.6: clear stored random auto alerts identifiable in its event log.
+   if(data.version<=2){
+    for(const event of [...state.events].reverse()){
+     if(event.type!=='level'||!event.name||event.origin!=='auto')continue;
+     const suffix='|'+String(event.name).toLocaleLowerCase('uk');
+     for(const key of [...state.levels.keys()])if(key.endsWith(suffix)){
+      const later=state.events.some(e=>e.type==='level'&&e.name===event.name&&e.origin==='manual'&&e.time>event.time);
+      if(!later){state.levels.delete(key);state.started.delete(key);}
+     }
+    }
+   }
    // Stage 1.5 had no alarm-start timestamps; recover them from its log when possible.
    for(const [key,level] of state.levels){
     if(state.started.has(key))continue;
@@ -86,6 +97,7 @@
  }
  function eventCaption(e){
   const t=tr();
+  if(e.type==='scenarioStart')return language==='uk'?'Запущено навчальний сценарій':'Запущен учебный сценарий';
   if(e.type==='levelBulk')return `${e.count} ${language==='uk'?'районів':'районов'} · ${t['level'+(e.level==='red'?'Red':e.level==='yellow'?'Yellow':'Off')]}`;
   if(e.type==='level')return `${e.name||'—'} · ${t['level'+(e.level==='red'?'Red':e.level==='yellow'?'Yellow':'Off')]} (${e.origin==='auto'?t.reasonAuto:t.reasonManual})`;
   return t[e.type]||'';
@@ -166,7 +178,7 @@
   el('modeManual').textContent=t.modeManual;el('modeAuto').textContent=t.modeAuto;
   el('gameSearch').placeholder=t.gameSearchPlaceholder;el('tabGame').lastElementChild.textContent=t.tabGame;el('tabGeography').lastElementChild.textContent=t.tabGeography;
   renderHits();
-  renderMode();renderEvents();
+  renderMode();renderEvents();statusScenario();
  }
  function alertSetMany(features,level,origin='manual'){
   if(!features.length||!['off','yellow','red'].includes(level))return;
@@ -185,40 +197,52 @@
  function alertSet(feature,level,origin='manual'){if(feature)alertSetMany([feature],level,origin);}
  function setMode(mode){
   if(!['manual','auto'].includes(mode)||state.mode===mode)return;
-  state.mode=mode;state.nextEvent=state.time+15;
-  renderMode();log({type:mode==='auto'?'modeSetAuto':'modeSetManual'});
+  state.mode=mode;state.nextEvent=state.time+15;if(mode==='manual')stopScenario();
+  renderMode();statusScenario();log({type:mode==='auto'?'modeSetAuto':'modeSetManual'});
  }
- function runAutoEvent(){
-  const pool=state.allFeatures;
-  if(!pool.length)return;
-  const feature=pool[Math.floor(Math.random()*pool.length)];
-  const old=getLevel(feature);
-  const r=Math.random();
-  let next=old==='off'?(r<.65?'yellow':'red'):old==='yellow'?(r<.43?'red':'off'):(r<.6?'off':'yellow');
-  if(next===old)next='off';
-  alertSet(feature,next,'auto');
+ // Deterministic *explicitly started* fictional scenario; never pick random real districts.
+ // Times are fictional game phases, not ETA or predictions of real aerial threats.
+ function statusScenario(){
+  const node=el('scenarioStatus');if(!node)return;
+  const s=state.scenario;
+  const uk=language==='uk';
+  node.textContent=s?(uk?`Сценарій: ${s.names.join(', ')} · етап ${Math.max(1,s.phase+1)}/3`:`Сценарий: ${s.names.join(', ')} · этап ${Math.max(1,s.phase+1)}/3`):
+   (uk?'Авто: виберіть район та запустіть навчальний сценарій. Без випадкових тривог.':'Авто: выбери район и запусти учебный сценарий. Без случайных тревог.');
+ }
+ function startScenario(){
+  if(!selected.length){statusScenario();el('scenarioStatus').textContent=language==='uk'?'Спершу виберіть район на мапі (Ctrl + клік — кілька).':'Сначала выбери район на карте (Ctrl + клик — несколько).';return;}
+  if(state.mode!=='auto')setMode('auto');
+  state.scenario={keys:selected.map(api.getKey),names:selected.map(api.getName),start:state.time,phase:-1};
+  // The selected district names are used only to select visual alert polygons.
+  statusScenario();log({type:'scenarioStart'});
+ }
+ function stopScenario(){state.scenario=null;statusScenario();}
+ function advanceScenario(){
+  const s=state.scenario;if(!s)return;
+  const since=state.time-s.start;
+  const phase=since>=90?3:since>=42?2:since>=12?1:since>=3?0:-1;
+  if(phase===s.phase)return;
+  s.phase=phase;
+  if(phase<0)return;
+  const features=state.allFeatures.filter(f=>s.keys.includes(api.getKey(f)));
+  if(features.length)alertSetMany(features,phase===0?'yellow':phase===1?'red':'off','auto');
+  if(phase>=2)stopScenario();else statusScenario();
  }
  function tick(){
   const now=performance.now();const delta=Math.min(2,Math.max(0,(now-lastTick)/1000));lastTick=now;
   if(state.paused)return;
   state.time+=delta*3*state.speed;
   if(Math.floor(state.time)!==lastClock){lastClock=Math.floor(state.time);el('simClock').textContent=formatTime(state.time);saveSoon();}
-  if(state.mode==='auto'&&state.time>=state.nextEvent){
-   runAutoEvent();state.nextEvent=state.time+30+Math.random()*32;
-  }
+  if(state.mode==='auto')advanceScenario();
  }
  function reset(){
   state.levels.clear();state.started.clear();state.mode='manual';state.speed=1;state.paused=false;
-  state.time=0;state.nextEvent=36;state.events=[];lastTick=performance.now();lastClock=-1;
+  state.time=0;state.nextEvent=36;state.scenario=null;state.events=[];lastTick=performance.now();lastClock=-1;
   api.repaintAll();window.dispatchEvent(new CustomEvent('atlas:alerts-changed'));window.dispatchEvent(new CustomEvent('atlas:game-reset'));
-  renderMode();el('simClock').textContent='00:00:00';log({type:'reset'});
- }
- function randomDistrict(){
-  if(!state.allFeatures.length)return;
-  api.focus(state.allFeatures[Math.floor(Math.random()*state.allFeatures.length)]);
+  renderMode();statusScenario();el('simClock').textContent='00:00:00';log({type:'reset'});
  }
  read();
- window.ATLAS_GAME={getLevel,getAlertInfo,getTime:()=>state.time,getSpeed:()=>state.speed,isPaused:()=>state.paused};
+ window.ATLAS_GAME={getLevel,getAlertInfo,getTime:()=>state.time,getSpeed:()=>state.speed,isPaused:()=>state.paused,startScenario};
  // Important: the basemap and all existing geography controls stay untouched.
  window.addEventListener('atlas:select',e=>{selected=e.detail?.features||[];renderTarget();});
  window.addEventListener('atlas:districts-ready',e=>{
@@ -243,7 +267,7 @@
  for(const button of document.querySelectorAll('[data-speed]'))button.addEventListener('click',()=>{
   state.speed=Number(button.dataset.speed);renderMode();saveSoon();
  });
- el('simRandomDistrict').addEventListener('click',randomDistrict);
+ el('simRandomDistrict').addEventListener('click',startScenario);
  el('simReset').addEventListener('click',()=>{
   const dialog=el('simConfirm');if(typeof dialog.showModal==='function')dialog.showModal();else if(confirm(tr().confirmTitle))reset();
  });

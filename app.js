@@ -1,4 +1,4 @@
-/* ATLAS UA / Stage 1.6 — geography and local fictional training alerts; no real alerts or tracking.
+/* ATLAS UA / Stage 1.7 — geography and local fictional training alerts; no real alerts or tracking.
  * Administrative boundaries: https://github.com/slawomirmatuszak/ukrainian_geodata (CC BY 4.0)
  * Lightweight Leaflet + Canvas. OSM base tiles, no API key, no worldwide masks.
  */
@@ -6,8 +6,8 @@
 
 const $=id=>document.getElementById(id);
 const TEXT={
-  uk:{brandSub:'Інтерактивна мапа',topLabel:'КАРТОГРАФІЧНИЙ ОГЛЯД',demoLabel:'ДЕМО · НЕ РЕАЛЬНІ ТРИВОГИ',sectionEyebrow:'МОДУЛЬ 01 / ГЕОГРАФІЯ',heroTitle:'Простір.<br><span>Деталі.</span>',heroSub:'Чиста мапа з населеними пунктами та адміністративними межами. Без зайвих накладок.',countryTitle:'ПЕРЕЙТИ ДО РЕГІОНУ',ua:'Україна',by:'Білорусь',ru:'РФ · захід',searchTitle:'ПОШУК РАЙОНІВ',searchPlaceholder:'Введіть назву району…',load:'Завантаження меж районів…',ready:'Районів завантажено: ',partial:'Області готові · Завантаження районів…',fail:'Не вдалося завантажити райони',noMatches:'Районів не знайдено',selectedTitle:'ВИБРАНИЙ РАЙОН',clearText:'Скинути вибір',layersTitle:'АДМІНІСТРАТИВНІ МЕЖІ',oblastLabel:'Області',oblastSub:'Виразний контур',raionLabel:'Райони',raionSub:'Ледь помітні до наведення',noteText:'Крим, Донецька й Луганська області — у складі України. Мапа демонстраційна.',stageText:'ЕТАП 1.6 · ІГРОВА МАПА',mapChipText:'УКРАЇНА · БІЛОРУСЬ · РФ',mapState:'МАПА АКТИВНА',zoom:'Масштаб',home:'Показати Україну',full:'На весь екран',openMenu:'Відкрити панель',unknown:'Район',noRegion:'Україна'},
-  ru:{brandSub:'Интерактивная карта',topLabel:'КАРТОГРАФИЧЕСКИЙ ОБЗОР',demoLabel:'ДЕМО · НЕ РЕАЛЬНЫЕ ТРЕВОГИ',sectionEyebrow:'МОДУЛЬ 01 / ГЕОГРАФИЯ',heroTitle:'Пространство.<br><span>Детали.</span>',heroSub:'Чистая карта с городами и административными границами. Без лишних наложений.',countryTitle:'ПЕРЕЙТИ К РЕГИОНУ',ua:'Украина',by:'Беларусь',ru:'РФ · запад',searchTitle:'ПОИСК РАЙОНОВ',searchPlaceholder:'Введите название района…',load:'Загрузка границ районов…',ready:'Районов загружено: ',partial:'Области готовы · Загрузка районов…',fail:'Не удалось загрузить районы',noMatches:'Районы не найдены',selectedTitle:'ВЫБРАННЫЙ РАЙОН',clearText:'Снять выделение',layersTitle:'АДМИНИСТРАТИВНЫЕ ГРАНИЦЫ',oblastLabel:'Области',oblastSub:'Заметный контур',raionLabel:'Районы',raionSub:'Почти незаметны до наведения',noteText:'Крым, Донецкая и Луганская области — в составе Украины. Карта демонстрационная.',stageText:'ЭТАП 1.6 · ИГРОВАЯ КАРТА',mapChipText:'УКРАИНА · БЕЛАРУСЬ · РФ',mapState:'КАРТА АКТИВНА',zoom:'Масштаб',home:'Показать Украину',full:'На весь экран',openMenu:'Открыть панель',unknown:'Район',noRegion:'Украина'}
+  uk:{brandSub:'Інтерактивна мапа',topLabel:'КАРТОГРАФІЧНИЙ ОГЛЯД',demoLabel:'ДЕМО · НЕ РЕАЛЬНІ ТРИВОГИ',sectionEyebrow:'МОДУЛЬ 01 / ГЕОГРАФІЯ',heroTitle:'Простір.<br><span>Деталі.</span>',heroSub:'Чиста мапа з населеними пунктами та адміністративними межами. Без зайвих накладок.',countryTitle:'ПЕРЕЙТИ ДО РЕГІОНУ',ua:'Україна',by:'Білорусь',ru:'РФ · захід',searchTitle:'ПОШУК РАЙОНІВ',searchPlaceholder:'Введіть назву району…',load:'Завантаження меж районів…',ready:'Районів завантажено: ',partial:'Області готові · Завантаження районів…',fail:'Не вдалося завантажити райони',noMatches:'Районів не знайдено',selectedTitle:'ВИБРАНИЙ РАЙОН',clearText:'Скинути вибір',layersTitle:'АДМІНІСТРАТИВНІ МЕЖІ',oblastLabel:'Області',oblastSub:'Виразний контур',raionLabel:'Райони',raionSub:'Ледь помітні до наведення',noteText:'Крим, Донецька й Луганська області — у складі України. Мапа демонстраційна.',stageText:'ЕТАП 1.7 · РАДАР НА МАПІ',mapChipText:'УКРАЇНА · БІЛОРУСЬ · РФ',mapState:'МАПА АКТИВНА',zoom:'Масштаб',home:'Показати Україну',full:'На весь екран',openMenu:'Відкрити панель',unknown:'Район',noRegion:'Україна'},
+  ru:{brandSub:'Интерактивная карта',topLabel:'КАРТОГРАФИЧЕСКИЙ ОБЗОР',demoLabel:'ДЕМО · НЕ РЕАЛЬНЫЕ ТРЕВОГИ',sectionEyebrow:'МОДУЛЬ 01 / ГЕОГРАФИЯ',heroTitle:'Пространство.<br><span>Детали.</span>',heroSub:'Чистая карта с городами и административными границами. Без лишних наложений.',countryTitle:'ПЕРЕЙТИ К РЕГИОНУ',ua:'Украина',by:'Беларусь',ru:'РФ · запад',searchTitle:'ПОИСК РАЙОНОВ',searchPlaceholder:'Введите название района…',load:'Загрузка границ районов…',ready:'Районов загружено: ',partial:'Области готовы · Загрузка районов…',fail:'Не удалось загрузить районы',noMatches:'Районы не найдены',selectedTitle:'ВЫБРАННЫЙ РАЙОН',clearText:'Снять выделение',layersTitle:'АДМИНИСТРАТИВНЫЕ ГРАНИЦЫ',oblastLabel:'Области',oblastSub:'Заметный контур',raionLabel:'Районы',raionSub:'Почти незаметны до наведения',noteText:'Крым, Донецкая и Луганская области — в составе Украины. Карта демонстрационная.',stageText:'ЭТАП 1.7 · РАДАР НА КАРТЕ',mapChipText:'УКРАИНА · БЕЛАРУСЬ · РФ',mapState:'КАРТА АКТИВНА',zoom:'Масштаб',home:'Показать Украину',full:'На весь экран',openMenu:'Открыть панель',unknown:'Район',noRegion:'Украина'}
 };
 const VIEWS={ua:[[44.2,22.1],[52.5,40.4]],by:[[51.15,23.1],[56.2,33.7]],ru:[[47.2,27.7],[59.5,51.5]]};
 const VIEW_LIMITS=[[41,18],[62,64]];
@@ -54,7 +54,7 @@ function scheduleAlertSummary(){
   const features=raionFeatures.filter(f=>window.ATLAS_GAME?.getLevel?.(f)!=='off');
   if(!features.length)return;
   summaryLayer=L.geoJSON({type:'FeatureCollection',features},{
-   renderer:summaryRenderer,interactive:false,smoothFactor:3,
+   renderer:summaryRenderer,interactive:false,smoothFactor:.5,
    style(f){const red=window.ATLAS_GAME?.getLevel?.(f)==='red';return {
     color:red?'#b34154':'#b88c35',weight:1,opacity:.8,
     fill:true,fillColor:red?'#e65763':'#f2bb42',fillOpacity:red?.49:.43,
@@ -66,6 +66,15 @@ function scheduleAlertSummary(){
 window.addEventListener('atlas:alerts-changed',scheduleAlertSummary);
 
 
+// For the *training alert fill*, close internal waterway rings so rivers/lakes do not show
+// artificial no-alert holes inside a chosen district. Exterior borders remain unchanged.
+// Keep GeoJSON feature object identity so selection and localStorage keys are stable.
+function closeInteriorRings(feature){
+ const g=feature?.geometry;if(!g||!Array.isArray(g.coordinates))return feature;
+ if(g.type==='Polygon')g.coordinates=g.coordinates.length?[g.coordinates[0]]:[];
+ if(g.type==='MultiPolygon')g.coordinates=g.coordinates.map(p=>p.length?[p[0]]:[]).filter(p=>p.length);
+ return feature;
+}
 function featureName(f){
  const p=f?.properties||{};
  for(const k of ['rayon','raion','district','name_uk','NAME_UA','name','NAME','ray_name','rayon_name','name_2','NAME_2','admin_name','title']){
@@ -95,7 +104,7 @@ function visualStyle(layer){
  const status=window.ATLAS_GAME?.getLevel?.(layer.feature)||'off';
  if(status!=='off'){
   const red=status==='red';
-  return {color:red?'#aa3545':'#be8724',weight:selected?2.45:hover?1.8:1.1,opacity:selected?1:hover?.95:.8,
+  return {color:red?'#aa3545':'#be8724',weight:selected?2.45:hover?1.8:1.6,opacity:selected?1:hover?.95:.78,
    fill:true,fillColor:red?'#e65763':'#f2bb42',fillOpacity:selected?.64:hover?.56:red?.47:.41};
  }
  return selected?activeDistrict:hover?hoverDistrict:normalDistrict;
@@ -219,9 +228,9 @@ async function loadOblasts(){
 async function loadRaions(){
  try{
   const g=await fetchGeo('rayony.geojson');
-  raionFeatures=g.features.filter(f=>f.geometry);
+  raionFeatures=g.features.filter(f=>f.geometry).map(closeInteriorRings);
   raionLayer=L.geoJSON({type:'FeatureCollection',features:raionFeatures},{
-   renderer:rayonRenderer,style:f=>{const level=window.ATLAS_GAME?.getLevel?.(f)||'off';return level==='red'?{...normalDistrict,color:'#ad3e47',fillColor:'#e65763',fillOpacity:.47,opacity:.8}:level==='yellow'?{...normalDistrict,color:'#b88a28',fillColor:'#f2bb42',fillOpacity:.41,opacity:.8}:normalDistrict;},smoothFactor:2.6,bubblingMouseEvents:false,
+   renderer:rayonRenderer,style:f=>{const level=window.ATLAS_GAME?.getLevel?.(f)||'off';return level==='red'?{...normalDistrict,color:'#ad3e47',fillColor:'#e65763',fillOpacity:.47,opacity:.8}:level==='yellow'?{...normalDistrict,color:'#b88a28',fillColor:'#f2bb42',fillOpacity:.41,opacity:.8}:normalDistrict;},smoothFactor:.6,bubblingMouseEvents:false,
    onEachFeature:(f,layer)=>{
     raionPaths.set(f,layer);
     layer.on('mouseover',()=>{window.ATLAS_HOVER_FEATURE=f;layer._atlasHover=true;refreshDistrict(layer)});
@@ -240,6 +249,7 @@ window.ATLAS_MAP_API={
  getDistricts:()=>raionFeatures,
  getSelected:()=>selectedLayer?.feature||null,
  getSelectedFeatures:()=>[...selectedLayers].map(layer=>layer.feature),
+ getSelectedCenter:()=>selectedLayer?.getBounds?.()?.getCenter?.()||null,
  getKey:districtKey,
  getName:featureName,
  getRegion:featureRegion,

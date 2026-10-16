@@ -8,10 +8,10 @@
   <title>ATLAS UA — Мапа України</title>
   <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="./leaflet-core.css?v=1.6">
-  <link rel="stylesheet" href="./style.css?v=1.6">
-  <link rel="stylesheet" href="./game.css?v=1.6">
-  <link rel="stylesheet" href="./radar.css?v=1.6">
+  <link rel="stylesheet" href="./leaflet-core.css?v=1.7">
+  <link rel="stylesheet" href="./style.css?v=1.7">
+  <link rel="stylesheet" href="./game.css?v=1.7">
+  <link rel="stylesheet" href="./radar.css?v=1.7">
 </head>
 <body>
   <svg xmlns="http://www.w3.org/2000/svg" class="svg-defs" aria-hidden="true">
@@ -58,13 +58,15 @@
             <div class="sim-speed"><span id="simSpeedLabel">Швидкість</span><div class="sim-speed-buttons" role="group" aria-label="Швидкість часу"><button class="selected" data-speed="1" type="button">1×</button><button data-speed="2" type="button">2×</button><button data-speed="3" type="button">3×</button><button data-speed="4" type="button">4×</button><button data-speed="5" type="button">5×</button></div></div>
             <div class="sim-multi-help" id="simMultiHelp">⌃ Ctrl + клік — обрати кілька районів. Кнопки рівнів застосовуються до всіх.</div>
             <details class="radar-panel" id="radarPanel" open>
-              <summary><span id="radarHeading">ІГРОВИЙ РАДАР</span><span id="radarBadge">МОДУЛЬ 03</span></summary>
-              <div class="radar-scene"><canvas id="radarCanvas" width="520" height="520" aria-label="Анімований ігровий радар"></canvas><span class="radar-demo-watermark">SIMULATION ONLY</span><div class="radar-center-text"><b id="radarObjectCount">0</b><small id="radarTargetsLabel">УМОВНІ ОБ’ЄКТИ</small></div></div>
-              <div class="radar-meta"><span><i class="radar-live-led"></i><span id="radarSpinLabel">ОБЕРТ: 4 С НА 1×</span></span><span id="radarSweepLabel">ЗАТУХАННЯ МІТОК</span></div>
-              <div class="radar-actions"><button id="radarSpawn" type="button">＋ <span id="radarSpawnLabel">Додати тестову ціль</span></button><button id="radarClear" type="button"><span id="radarClearLabel">Очистити</span></button></div>
-              <label class="radar-map-toggle"><input type="checkbox" id="radarMapToggle" checked><span id="radarShowMapLabel">Показувати об’єкти на мапі</span></label>
-              <p class="radar-note" id="radarNote">Умовні траєкторії та мітки. Без реального радіолокаційного виявлення.</p>
+              <summary><span id="radarHeading">РАДАР НА МАПІ</span><span id="radarBadge">МОДУЛЬ 03</span></summary>
+              <div class="radar-map-description"><span class="radar-live-led"></span><strong id="radarSpinLabel">СКАНУВАННЯ НА ВСЮ МАПУ · 4 С / 1×</strong></div>
+              <div class="radar-map-subline" id="radarSweepLabel">Мітки з'являються після проходу променя та поступово згасають.</div>
+              <div class="radar-status-card"><span id="radarTargetsLabel">УМОВНІ ЦІЛІ</span><strong id="radarObjectCount">0</strong><span id="radarVisibleLabel">Видно після сканування</span></div>
+              <div class="radar-actions"><button id="radarSpawn" type="button">＋ <span id="radarSpawnLabel">Створити навчальну мітку</span></button><button id="radarClear" type="button"><span id="radarClearLabel">Очистити</span></button></div>
+              <label class="radar-map-toggle"><input type="checkbox" id="radarMapToggle" checked><span id="radarShowMapLabel">Радар на всю мапу</span></label>
+              <p class="radar-note" id="radarNote">Вигадані навчальні цілі. Жодних реальних координат польоту чи прогнозів.</p>
             </details>
+            <div class="scenario-status" id="scenarioStatus">Авто: оберіть район і запустіть навчальний сценарій. Без випадкових тривог.</div>
             <div class="sim-utility"><button id="simRandomDistrict" type="button">◈ <span id="simRandomLabel">Випадковий район</span></button><button id="simReset" class="destructive" type="button">↺ <span id="simResetLabel">Скинути</span></button></div>
             <details class="sim-log" open><summary><span id="simLogHeading">ЖУРНАЛ ПОДІЙ</span><span id="simEventCount">0</span></summary><ol id="simEvents" aria-live="polite"></ol></details>
           </section>
@@ -91,10 +93,12 @@
           <div class="note"><span class="note-pip"></span><span id="noteText">Крим, Донецька й Луганська області — у складі України. Мапа демонстраційна.</span></div>
           </div>
         </div>
-        <div class="side-footer"><span class="footer-logo">A<span>/</span>UA</span><div><strong>MAP ENGINE</strong><small id="stageText">ЕТАП 1.6 · РАДАР І ТРИВОГИ</small></div><span class="build-version">1.6</span></div>
+        <div class="side-footer"><span class="footer-logo">A<span>/</span>UA</span><div><strong>MAP ENGINE</strong><small id="stageText">ЕТАП 1.7 · РАДАР НА МАПІ</small></div><span class="build-version">1.7</span></div>
       </aside>
       <section class="map-wrap" id="mapWrap" aria-label="Мапа України та сусідніх територій">
         <div id="map"></div>
+        <canvas id="radarOverlay" class="radar-world-overlay" aria-hidden="true"></canvas>
+        <div class="radar-map-caption" id="radarMapCaption">● СИМУЛЯЦІЯ РАДАРА</div>
         <div class="map-chip"><span class="map-chip-led"></span><span id="mapChipText">УКРАЇНА · БІЛОРУСЬ · РФ</span></div>
         <div class="map-alert-summary"><span class="map-alert-label" id="mapAlertLabel">ІГРОВІ ТРИВОГИ</span><span class="map-alert-count red"><span></span><b id="mapRedCount">0</b></span><span class="map-alert-count yellow"><span></span><b id="mapYellowCount">0</b></span><span class="map-auto-dot" id="mapAutoIndicator">РУЧНИЙ</span></div>
         <div class="map-actions"><button id="homeBtn" title="Показати Україну" aria-label="Показати Україну"><svg class="ico"><use href="#i-home"/></svg></button><button id="fullscreenBtn" title="На весь екран" aria-label="На весь екран"><svg class="ico"><use href="#i-expand"/></svg></button></div>
@@ -105,8 +109,8 @@
     <dialog class="sim-confirm" id="simConfirm"><form method="dialog"><div class="sim-confirm-icon">↺</div><h2 id="confirmTitle">Скинути симуляцію?</h2><p id="confirmDetail">Усі ігрові тривоги будуть вимкнені.</p><div class="sim-confirm-actions"><button type="submit" value="cancel" id="confirmCancel">Скасувати</button><button type="submit" value="reset" class="destructive" id="confirmAccept">Скинути</button></div></form></dialog>
   </div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="./app.js?v=1.6"></script>
-  <script src="./game.js?v=1.6"></script>
-  <script src="./radar.js?v=1.6"></script>
+  <script src="./app.js?v=1.7"></script>
+  <script src="./game.js?v=1.7"></script>
+  <script src="./radar.js?v=1.7"></script>
 </body>
 </html>

@@ -28,3 +28,15 @@
 .training-marker-body{width:30px;height:30px;display:grid;place-items:center;border:1px solid #68aeb7;border-radius:50%;background:#0a222ce8;box-shadow:0 0 11px #162a2b92;color:#8ef2e6;font-size:17px;font-weight:900;text-shadow:0 0 6px #4cd4c1}
 .training-marker-body.fast{color:#f6d188;border-color:#ad8f5c}.training-marker-body.unknown{color:#b9ddff;border-color:#7196b6}
 @media(max-width:800px){.radar-panel{margin-bottom:16px}.radar-scene{max-width:245px}}
+
+/* ATLAS UA 1.7: the radar beam is a full-screen non-interactive overlay. */
+.radar-world-overlay{position:absolute;inset:0;z-index:440;display:block;width:100%;height:100%;pointer-events:none!important;contain:layout paint;}
+.radar-map-caption{position:absolute;z-index:552;top:63px;left:19px;color:#63c99f;background:#0e2623dc;border:1px solid #28644d;padding:7px 9px;border-radius:6px;font-size:9px;letter-spacing:.07em;font-weight:800;pointer-events:none;box-shadow:0 4px 12px #0003}
+.radar-panel{margin-top:17px}.radar-map-description{padding:12px 12px 4px;display:flex;align-items:center;gap:8px;font-size:9px;letter-spacing:.02em;color:#9ae2c1}
+.radar-map-subline{font-size:10px;line-height:1.6;padding:6px 12px 10px;color:#89aba7}
+.radar-status-card{margin:0 12px 12px;border-radius:8px;border:1px solid #2c5653;background:#12342f;display:flex;align-items:center;gap:9px;padding:10px 12px}
+.radar-status-card span:first-child{font-size:9px;color:#9fc4bd;letter-spacing:.05em;font-weight:800}
+.radar-status-card strong{font-size:22px;color:#9df6cc}
+.radar-status-card span:last-child{font-size:9px;color:#91aaa7;margin-left:auto;text-align:right;max-width:95px}
+.scenario-status{background:#102d39;border:1px solid #345466;border-radius:8px;padding:10px 11px;color:#a4cbca;font-size:10px;line-height:1.6;margin-top:8px;margin-bottom:12px}
+@media(max-width:800px){.radar-map-caption{left:11px;top:55px}}

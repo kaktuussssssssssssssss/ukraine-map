@@ -1,109 +1,121 @@
-/* ATLAS UA 1.6 / Entirely fictional visual radar and moving training markers.
-   This module is NOT a flight planner and does not model real sensors or weapons. */
+/* ATLAS UA 1.7 — fictional fullscreen radar drawn directly over map.
+   No real radar data, weapons specifications or strike planning. */
 'use strict';
 (() => {
- const mapApi=window.ATLAS_MAP_API,game=window.ATLAS_GAME;
- if(!mapApi||!game)return;
- const $=id=>document.getElementById(id);
- const canvas=$('radarCanvas'),ctx=canvas?.getContext('2d');
- if(!ctx)return;
- const RAD=2*Math.PI, CENTER=260, RADIUS=219, REVO_GAME_SECONDS=12; // exactly 4 real seconds at 1×
- const variants=[
-  {icon:'◆',kind:'probe',color:'#86e8e0',labelUk:'Навчальна мітка',labelRu:'Учебная отметка'},
-  {icon:'▲',kind:'fast',color:'#e4be76',labelUk:'Швидкий маркер',labelRu:'Быстрый маркер'},
-  {icon:'■',kind:'unknown',color:'#a0c6f4',labelUk:'Невідома мітка',labelRu:'Неизвестная отметка'}
+ const api=window.ATLAS_MAP_API,game=window.ATLAS_GAME;
+ const cvs=document.getElementById('radarOverlay');
+ if(!cvs||!api||!game)return;
+ const ctx=cvs.getContext('2d',{alpha:true});if(!ctx)return;
+ const map=api.map;const el=id=>document.getElementById(id);
+ const TWO=Math.PI*2,PERIOD=12; // 12 game seconds == 4 actual seconds at 1×
+ const types=[
+  {symbol:'◇',kind:'probe',color:'#3adcb0',uk:'Навчальний БПЛА',ru:'Учебный БПЛА'},
+  {symbol:'▲',kind:'fast',color:'#f2cb77',uk:'Швидка мітка',ru:'Быстрая отметка'},
+  {symbol:'◆',kind:'unknown',color:'#8dbfea',uk:'Невідома мітка',ru:'Неизвестная отметка'}
  ];
- const objects=[],detections=new Map();
- let nextId=1,lastSweep=null,lastGameTime=game.getTime(),frame=0,lastDraw=0,visible=true;
- const isUk=()=>mapApi.getLanguage()==='uk';
- mapApi.map.createPane('trainingMarkerPane');
- const pane=mapApi.map.getPane('trainingMarkerPane');pane.style.zIndex='520';pane.style.pointerEvents='none';
- const text={
-  uk:{radarHeading:'ІГРОВИЙ РАДАР',radarBadge:'МОДУЛЬ 03',radarTargetsLabel:'УМОВНІ ОБ’ЄКТИ',radarSpinLabel:'ОБЕРТ: 4 С НА 1×',radarSweepLabel:'МІТКИ ЗАТУХАЮТЬ',radarSpawnLabel:'Додати тестову ціль',radarClearLabel:'Очистити',radarShowMapLabel:'Показувати об’єкти на мапі',radarNote:'Навчальні мітки та умовний рух. Не відображає реальну повітряну обстановку.',simMultiHelp:'Ctrl + клік — вибрати кілька районів. Рівень зміниться для всіх.'},
-  ru:{radarHeading:'ИГРОВОЙ РАДАР',radarBadge:'МОДУЛЬ 03',radarTargetsLabel:'УСЛОВНЫЕ ОБЪЕКТЫ',radarSpinLabel:'ОБОРОТ: 4 С НА 1×',radarSweepLabel:'МЕТКИ ЗАТУХАЮТ',radarSpawnLabel:'Добавить тестовую цель',radarClearLabel:'Очистить',radarShowMapLabel:'Показывать объекты на карте',radarNote:'Учебные отметки и условное движение. Не показывает реальную воздушную обстановку.',simMultiHelp:'Ctrl + клик — выбери несколько районов. Уровень изменится у всех.'}
- };
- function applyLanguage(){const t=text[isUk()?'uk':'ru'];for(const [id,label] of Object.entries(t))if($(id))$(id).textContent=label;for(const obj of objects)if(obj.marker)obj.marker.setTooltipContent(isUk()?obj.variant.labelUk:obj.variant.labelRu);}
- function position(obj,t){
-  // Closed synthetic visual loops without endpoints, city targets, or real-world flight modeling.
-  const phase=(t-obj.birth)*(.010+obj.variantIndex*.0025)+obj.seed;
-  return {lat:48.5+Math.sin(obj.seed*2.2)*1.35+Math.sin(phase)*.48,lng:31.5+Math.cos(obj.seed*1.8)*3+Math.cos(phase*.79)*.92};
+ const items=[],seen=new Map();let nextId=1,viewW=0,viewH=0,dpi=1,lastAngle=null,lastTime=game.getTime(),lastFrame=0;
+ let enabled=true;let smoothTime=game.getTime(),lastAnimationMs=null;
+ const language=()=>api.getLanguage()==='uk'?'uk':'ru';
+ function resize(){
+  const bounds=el('mapWrap').getBoundingClientRect();
+  viewW=Math.max(1,Math.round(bounds.width));viewH=Math.max(1,Math.round(bounds.height));
+  dpi=Math.min(1.5,window.devicePixelRatio||1);
+  cvs.width=Math.round(viewW*dpi);cvs.height=Math.round(viewH*dpi);
+  cvs.style.width=viewW+'px';cvs.style.height=viewH+'px';
+  ctx.setTransform(dpi,0,0,dpi,0,0);
  }
- function normalized(obj,t){
-  const p=position(obj,t);
-  return {x:(p.lng-31.5)/8,y:-(p.lat-48.5)/4};
- }
- function markerIcon(variant){
-  return L.divIcon({className:'training-marker',html:`<span class="training-marker-body ${variant.kind}" aria-label="SIMULATION">${variant.icon}</span>`,iconSize:[30,30],iconAnchor:[15,15]});
- }
+ function pickedCenter(){return api.getSelectedCenter?.()||map.getCenter();}
  function spawn(){
-  if(objects.length>=12)return;
-  const variantIndex=(nextId-1)%variants.length,variant=variants[variantIndex];
-  const id=nextId++,birth=game.getTime(),seed=id*2.04;
-  const obj={id,variant,variantIndex,birth,seed,marker:null};
-  const p=position(obj,birth);
-  obj.marker=L.marker([p.lat,p.lng],{icon:markerIcon(variant),pane:'trainingMarkerPane',keyboard:false,interactive:false});
-  obj.marker.bindTooltip(isUk()?variant.labelUk:variant.labelRu,{direction:'top'});
-  if($('radarMapToggle').checked)obj.marker.addTo(mapApi.map);
-  objects.push(obj);$('radarObjectCount').textContent=String(objects.length);
+  if(items.length>=24)return;
+  const pos=pickedCenter(),id=nextId++;
+  // Slight, purely visual fictional drift — no destinations or geographic flight routing.
+  const item={id,base:L.latLng(pos.lat,pos.lng),birth:smoothTime,type:types[(id-1)%types.length],offset:Math.PI*id*.7};
+  items.push(item);el('radarObjectCount').textContent=String(items.length);
+  seen.delete(id); // invisible until the sweep actually reaches it
  }
- function clear(){for(const obj of objects)if(obj.marker)mapApi.map.removeLayer(obj.marker);objects.length=0;detections.clear();$('radarObjectCount').textContent='0';}
- function stepObjects(now){
-  if(!visible)return;
-  if(!$('radarMapToggle').checked)return;
-  for(const obj of objects){const p=position(obj,now);obj.marker.setLatLng([p.lat,p.lng]);}
+ function clear(){items.length=0;seen.clear();el('radarObjectCount').textContent='0';}
+ function coords(item,t){
+  const dt=Math.max(0,t-item.birth)/55;
+  // Small stationary-ish loops: purely aesthetic, not an actual weapons trajectory.
+  return L.latLng(item.base.lat+Math.sin(dt*.7+item.offset)*.08,item.base.lng+Math.cos(dt*.8+item.offset)*.12);
  }
- function circle(x,y,r,color,width=1){ctx.beginPath();ctx.arc(x,y,r,0,RAD);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();}
- function render(now){
-  const w=520,h=520;ctx.clearRect(0,0,w,h);
-  ctx.save();ctx.translate(CENTER,CENTER);
-  const surface=ctx.createRadialGradient(0,0,5,0,0,260);
-  surface.addColorStop(0,'#103b39');surface.addColorStop(1,'#06141e');
-  ctx.fillStyle=surface;ctx.beginPath();ctx.arc(0,0,244,0,RAD);ctx.fill();
-  ctx.strokeStyle='rgba(88,185,157,.12)';ctx.lineWidth=1;
-  for(let i=1;i<=4;i++)circle(0,0,i*RADIUS/4,'rgba(96,185,156,.19)');
-  ctx.beginPath();ctx.moveTo(-RADIUS,0);ctx.lineTo(RADIUS,0);ctx.moveTo(0,-RADIUS);ctx.lineTo(0,RADIUS);ctx.stroke();
-  for(let i=0;i<12;i++){const a=i*RAD/12;ctx.beginPath();ctx.moveTo(Math.cos(a)*233,Math.sin(a)*233);ctx.lineTo(Math.cos(a)*242,Math.sin(a)*242);ctx.strokeStyle='rgba(109,212,165,.35)';ctx.stroke();}
-  // Rotating green scan with gentle trail; its speed follows the simulation clock.
-  const sweep=(now/REVO_GAME_SECONDS*RAD)%RAD;
-  ctx.save();ctx.rotate(sweep);ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,RADIUS,-.39,0);ctx.closePath();
-  const grad=ctx.createLinearGradient(0,0,RADIUS,0);grad.addColorStop(0,'rgba(48,214,141,.02)');grad.addColorStop(1,'rgba(71,244,165,.26)');
-  ctx.fillStyle=grad;ctx.fill();ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(RADIUS,0);ctx.strokeStyle='#67f3ad';ctx.shadowBlur=17;ctx.shadowColor='#58ffbd';ctx.lineWidth=3;ctx.stroke();ctx.restore();
-  // Snapshots only update after the moving scan crosses the *current* target direction.
-  if(lastSweep!==null&&now>=lastGameTime){
-   const move=(sweep-lastSweep+RAD)%RAD;
-   if(move<=2){
-    for(const obj of objects){
-     const p=normalized(obj,now),x=p.x*RADIUS*.8,y=p.y*RADIUS*.8;
-     if(Math.hypot(x,y)>RADIUS-10)continue;
-     const a=(Math.atan2(y,x)+RAD)%RAD;
-     if((a-lastSweep+RAD)%RAD<=move){detections.set(obj.id,{x,y,time:now,color:obj.variant.color});}
+ function sweepCrossed(prev,now,a){return ((a-prev+TWO)%TWO)<=((now-prev+TWO)%TWO);}
+ function drawMarker(point,item,opacity){
+  const x=point.x,y=point.y;if(x<0||y<0||x>viewW||y>viewH)return;
+  ctx.save();ctx.globalAlpha=opacity;
+  ctx.shadowBlur=11;ctx.shadowColor=item.type.color;
+  ctx.strokeStyle=item.type.color;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(x,y,10,0,TWO);ctx.stroke();
+  ctx.fillStyle='#092c2a';ctx.beginPath();ctx.arc(x,y,8,0,TWO);ctx.fill();
+  ctx.shadowBlur=0;ctx.fillStyle=item.type.color;
+  ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(item.type.symbol,x,y+.3);
+  ctx.textAlign='left';ctx.fillStyle='#d4f6ee';ctx.font='700 10px system-ui';
+  const text=(language()==='uk'?'МІТКА ':'МЕТКА ')+String(item.id).padStart(2,'0');
+  ctx.fillText(text,x+14,y+3);
+  ctx.restore();
+ }
+ function render(now=smoothTime){
+  if(!viewW||!viewH)return;
+  ctx.clearRect(0,0,viewW,viewH);if(!enabled)return;
+  const angle=(now/PERIOD*TWO)%TWO;
+  const cx=viewW*.5,cy=viewH*.5,far=Math.hypot(viewW,viewH);
+  // Full viewport revolving green sweep line and subtle trailing sector.
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);
+  const grad=ctx.createLinearGradient(0,0,far,0);
+  grad.addColorStop(0,'rgba(64,244,158,.0)');grad.addColorStop(.18,'rgba(56,232,151,.07)');grad.addColorStop(1,'rgba(57,241,163,.09)');
+  ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,far,-.10,0);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(far,0);ctx.strokeStyle='rgba(70,246,164,.72)';ctx.lineWidth=1.8;ctx.shadowColor='#41dba0';ctx.shadowBlur=8;ctx.stroke();ctx.restore();
+  // Continuous real positions remain hidden; only a discrete, fading snapshot is drawn.
+  if(lastAngle!==null&&!game.isPaused()&&now>=lastTime){
+   const travel=(now-lastTime)/PERIOD*TWO;
+   if(travel>0&&travel<=TWO*1.2){
+    for(const item of items){
+     const ll=coords(item,now),p=map.latLngToContainerPoint(ll);
+     if(p.x<0||p.y<0||p.x>viewW||p.y>viewH)continue;
+     const direction=(Math.atan2(p.y-cy,p.x-cx)+TWO)%TWO;
+     if(travel>=TWO||sweepCrossed(lastAngle,angle,direction))seen.set(item.id,{latlng:ll,at:now});
     }
    }
   }
-  lastSweep=sweep;lastGameTime=now;
-  for(const [id,d] of detections){
-   if(!objects.find(obj=>obj.id===id)){detections.delete(id);continue;}
-   const age=now-d.time,alpha=Math.max(0,1-age/27);
-   if(alpha<=0){detections.delete(id);continue;}
-   ctx.globalAlpha=alpha;ctx.fillStyle=d.color;ctx.shadowBlur=15*alpha;ctx.shadowColor=d.color;
-   ctx.beginPath();ctx.arc(d.x,d.y,5.1,0,RAD);ctx.fill();ctx.shadowBlur=0;
-   ctx.strokeStyle=d.color;ctx.lineWidth=1;ctx.beginPath();ctx.arc(d.x,d.y,9,0,RAD);ctx.stroke();ctx.globalAlpha=1;
+  lastAngle=angle;lastTime=now;
+  for(const item of items){
+   const snap=seen.get(item.id);if(!snap)continue;
+   const age=now-snap.at,alpha=Math.max(0,1-age/23);
+   if(alpha<=0){seen.delete(item.id);continue;}
+   drawMarker(map.latLngToContainerPoint(snap.latlng),item,Math.max(.05,alpha));
   }
-  ctx.fillStyle='#8deebc';ctx.beginPath();ctx.arc(0,0,4,0,RAD);ctx.fill();ctx.restore();
  }
- function animation(nowMs){
-  frame=requestAnimationFrame(animation);
-  if(document.hidden||nowMs-lastDraw<42)return;
-  lastDraw=nowMs;
-  const t=game.getTime();
-  stepObjects(t);
-  if($('radarPanel').open)render(t);
+ function animation(ms){
+  requestAnimationFrame(animation);
+  if(lastAnimationMs===null){lastAnimationMs=ms;return;}
+  const dt=Math.min(.12,Math.max(0,(ms-lastAnimationMs)/1000));lastAnimationMs=ms;
+  if(!game.isPaused())smoothTime+=dt*3*game.getSpeed();
+  if(document.hidden){lastAngle=null;return;}
+  if(ms-lastFrame<33)return; // smooth 30fps overlay, independent of map vector layers
+  lastFrame=ms;render(smoothTime);
  }
- $('radarSpawn').addEventListener('click',spawn);
- $('radarClear').addEventListener('click',clear);
- $('radarMapToggle').addEventListener('change',e=>{for(const obj of objects){if(e.target.checked){obj.marker.addTo(mapApi.map);}else{mapApi.map.removeLayer(obj.marker);}}});
- window.addEventListener('atlas:language',applyLanguage);
- window.addEventListener('atlas:game-reset',()=>{clear();lastSweep=null;lastGameTime=game.getTime();});
- window.ATLAS_RADAR={spawn,clear,count:()=>objects.length,snapshotCount:()=>detections.size};
- applyLanguage();frame=requestAnimationFrame(animation);
+ function updateLanguage(){
+  const uk=language()==='uk';
+  const copy={
+   radarHeading:uk?'РАДАР НА МАПІ':'РАДАР НА КАРТЕ',radarBadge:uk?'МОДУЛЬ 03':'МОДУЛЬ 03',
+   radarTargetsLabel:uk?'УМОВНІ ЦІЛІ':'УСЛОВНЫЕ ЦЕЛИ',radarVisibleLabel:uk?'Видно після сканування':'Видны после сканирования',
+   radarSpinLabel:uk?'СКАНУВАННЯ НА ВСЮ МАПУ · 4 С / 1×':'СКАНИРОВАНИЕ ВСЕЙ КАРТЫ · 4 С / 1×',
+   radarSweepLabel:uk?'Мітки з’являються після проходу променя та згасають.':'Метки появляются после прохода луча и затухают.',
+   radarSpawnLabel:uk?'Додати навчальну мітку':'Добавить учебную отметку',radarClearLabel:uk?'Очистити':'Очистить',
+   radarShowMapLabel:uk?'Радар на всю мапу':'Радар на всю карту',
+   radarNote:uk?'Вигадані навчальні цілі. Не відображає реальні дрони та ракети.':'Вымышленные учебные цели. Не показывает реальные дроны и ракеты.',
+   radarMapCaption:uk?'● ІГРОВЕ СКАНУВАННЯ':'● ИГРОВОЕ СКАНИРОВАНИЕ'
+  };
+  for(const [id,value] of Object.entries(copy))if(el(id))el(id).textContent=value;
+ }
+ el('radarSpawn').addEventListener('click',spawn);
+ el('radarClear').addEventListener('click',clear);
+ el('radarMapToggle').addEventListener('change',e=>{enabled=e.target.checked;if(!enabled)seen.clear();el('radarMapCaption').hidden=!enabled;lastAngle=null;});
+ window.addEventListener('atlas:language',updateLanguage);
+ window.addEventListener('atlas:game-reset',()=>{clear();smoothTime=game.getTime();lastAngle=null;lastTime=smoothTime;});
+ if('ResizeObserver'in window)new ResizeObserver(resize).observe(el('mapWrap'));
+ window.addEventListener('resize',resize);
+ map.on('resize moveend zoomend',()=>{if(!el('mapWrap'))return;render();});
+ resize();updateLanguage();requestAnimationFrame(animation);
+ window.ATLAS_RADAR={spawn,clear,count:()=>items.length,snapshotCount:()=>seen.size,redraw:render};
 })();
