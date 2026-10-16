@@ -1,82 +1,68 @@
 <!doctype html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#0b1018" />
-  <meta name="description" content="Інтерактивна демонстраційна мапа України з межами районів. Не є офіційною картою тривог." />
-  <title>ATLAS UA — Інтерактивна мапа</title>
-  <link rel="preconnect" href="https://basemaps.cartocdn.com" crossorigin />
-  <link rel="preconnect" href="https://unpkg.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="./style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0c1620">
+  <meta name="description" content="ATLAS UA — демонстраційна інтерактивна мапа України. Не є офіційною мапою тривог.">
+  <title>ATLAS UA — Мапа України</title>
+  <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoT7AqT4rPxIh0=" crossorigin="">
+  <link rel="stylesheet" href="./style.css?v=1.3">
 </head>
 <body>
-  <svg class="icon-symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <symbol id="ic-map" viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Zm6-3v15m6-12v15"/></symbol>
-    <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></symbol>
-    <symbol id="ic-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/></symbol>
-    <symbol id="ic-pin" viewBox="0 0 24 24"><path d="M20 10c0 5.2-8 11-8 11S4 15.2 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.4"/></symbol>
-    <symbol id="ic-crosshair" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 1v4m0 14v4M1 12h4m14 0h4"/></symbol>
-    <symbol id="ic-expand" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></symbol>
-    <symbol id="ic-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
-    <symbol id="ic-chevron" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></symbol>
-    <symbol id="ic-close" viewBox="0 0 24 24"><path d="M5 5 19 19M19 5 5 19"/></symbol>
-    <symbol id="ic-moon" viewBox="0 0 24 24"><path d="M20.2 16.3A8.6 8.6 0 0 1 7.7 3.8 8.6 8.6 0 1 0 20.2 16.3Z"/></symbol>
-    <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.5 1.5m11.2 11.2 1.5 1.5m0-14.2-1.5 1.5M6.4 17.6l-1.5 1.5"/></symbol>
-    <symbol id="ic-check" viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7"/></symbol>
-    <symbol id="ic-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.5"/></symbol>
-    <symbol id="ic-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.6 6M20 4v7h-7"/></symbol>
+  <svg xmlns="http://www.w3.org/2000/svg" class="svg-defs" aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3 2 9l10 6 10-6-10-6ZM2 14l10 6 10-6"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="M3 6 9 3l6 3 6-3v15l-6 3-6-3-6 3V6Zm6-3v15m6-12v15"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c-5 5-5 13 0 18M12 3c5 5 5 13 0 18"/></symbol>
   </svg>
-  <div class="app-shell" id="appShell">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-icon" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M5 12 20 4l15 8v16l-15 8-15-8Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 12 20 21l15-9M20 21v15" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="20" cy="21" r="3" fill="currentColor"/></svg></div>
-        <div class="brand-copy"><strong>ATLAS<span>UA</span></strong><small id="brandSubtitle">Геопросторовий симулятор</small></div>
-      </div>
-      <div class="top-center"><span class="top-dash"></span><span id="topLabel">ІНТЕРАКТИВНА МАПА УКРАЇНИ</span><span class="top-dash"></span></div>
-      <div class="header-right">
-        <span class="demo-chip"><span class="demo-chip-dot"></span><span id="demoLabel">ДЕМО · НЕ РЕАЛЬНІ ТРИВОГИ</span></span>
-        <button class="lang-button" id="langBtn" type="button" title="Змінити мову">УКР <svg class="icon"><use href="#ic-chevron"/></svg></button>
-        <button id="menuBtn" class="icon-button mobile-menu" type="button" aria-label="Відкрити меню"><svg class="icon"><use href="#ic-menu"/></svg></button>
-      </div>
+  <div class="app" id="app">
+    <header class="header">
+      <div class="identity"><div class="brand-mark"><svg class="ico" aria-hidden="true"><use href="#i-map"/></svg></div><div class="brand-txt"><strong>ATLAS <em>UA</em></strong><span id="brandSub">Інтерактивна мапа</span></div></div>
+      <div class="header-mid"><span class="header-mid-dot"></span><span id="topLabel">КАРТОГРАФІЧНИЙ ОГЛЯД</span></div>
+      <div class="header-actions"><span class="demo-label" id="demoLabel">ДЕМО · НЕ РЕАЛЬНІ ТРИВОГИ</span><button class="language" id="langBtn" type="button" aria-label="Мова">УКР / РУС</button><button class="mobile-menu" id="menuBtn" type="button" aria-label="Відкрити меню"><svg class="ico"><use href="#i-menu"/></svg></button></div>
     </header>
-
-    <main class="main-area">
+    <main class="workarea">
       <aside class="sidebar" id="sidebar">
-        <div class="sidebar-scroll">
-          <div class="side-intro"><div class="eyebrow"><span class="eyebrow-line"></span><span id="sideEyebrow">ГЕОПРОСТОРОВІ ДАНІ</span></div><h1 id="sideHeading">Карта<br><span>України.</span></h1><p id="sideDesc">Досліджуйте райони, переміщуйтеся мапою та керуйте її виглядом.</p></div>
-          <div class="sidebar-divider"></div>
-          <div class="section-heading"><span id="districtTitle">ПОШУК РАЙОНУ</span><svg class="icon"><use href="#ic-search"/></svg></div>
-          <label class="search-field" for="districtSearch"><svg class="icon"><use href="#ic-search"/></svg><input id="districtSearch" autocomplete="off" type="search" placeholder="Назва району або області…"/><span class="kbd">⌕</span></label>
-          <div class="district-data-status" id="districtLoading" role="status"><span class="pulse-dot"></span><span id="districtStatusText">Завантаження районів…</span></div>
-          <div id="districtResults" class="district-results"></div>
-          <div id="selectedDistrict" class="selected-card" hidden><div class="selected-eyebrow"><svg class="icon"><use href="#ic-pin"/></svg><span id="selectedLabel">ОБРАНИЙ РАЙОН</span></div><strong id="selectedName"></strong><p id="selectedExtra"></p><button class="clear-selected" id="deselectBtn" type="button"><svg class="icon"><use href="#ic-close"/></svg><span id="clearText">Скинути вибір</span></button></div>
-          <div class="sidebar-divider divider-spaced"></div>
-          <div class="section-heading"><span id="layersTitle">ШАРИ МАПИ</span><svg class="icon"><use href="#ic-layers"/></svg></div>
-          <label class="toggle-row"><span class="toggle-icon"><svg class="icon"><use href="#ic-map"/></svg></span><span class="toggle-copy"><strong id="districtsToggleText">Межі районів</strong><small id="districtsToggleSub">Тонкі контури 2020 року</small></span><input type="checkbox" id="districtsToggle" checked/><span class="switch"></span></label>
-          <label class="toggle-row"><span class="toggle-icon"><svg class="icon"><use href="#ic-layers"/></svg></span><span class="toggle-copy"><strong id="outsideToggleText">Затемнення інших країн</strong><small id="outsideToggleSub">Чорні діагональні смуги</small></span><input type="checkbox" id="outsideToggle" checked/><span class="switch"></span></label>
-          <div class="theme-row"><div><span id="mapThemeTitle">СТИЛЬ МАПИ</span></div><div class="theme-toggle" role="group" aria-label="Стиль мапи"><button type="button" class="theme-button active" id="nightBtn" title="Нічна"><svg class="icon"><use href="#ic-moon"/></svg></button><button type="button" class="theme-button" id="dayBtn" title="Денна"><svg class="icon"><use href="#ic-sun"/></svg></button></div></div>
-          <div class="sidebar-divider divider-spaced"></div>
-          <div class="legend-title" id="legendTitle">УМОВНІ ПОЗНАЧЕННЯ</div>
-          <div class="legend-row"><span class="legend-line district-line"></span><span id="legendDistrict">Межа району</span></div>
-          <div class="legend-row"><span class="legend-line selected-line"></span><span id="legendSelected">Вибраний район</span></div>
-          <div class="legend-row"><span class="legend-swatch blackout"></span><span id="legendOutside">Інші країни</span></div>
-          <div class="source-credits">Геодані районів: <a href="https://github.com/slawomirmatuszak/ukrainian_geodata" target="_blank" rel="noopener noreferrer">ukrainian_geodata</a> (CC BY 4.0)<br>Контури країн: Natural Earth (Public Domain)</div>
+        <div class="side-scroll">
+          <div class="eyebrow"><span class="eyebrow-accent"></span><span id="sectionEyebrow">МОДУЛЬ 01 / ГЕОГРАФІЯ</span></div>
+          <h1 id="heroTitle">Простір.<br><span>Деталі.</span></h1>
+          <p class="lead" id="heroSub">Чиста мапа з населеними пунктами та адміністративними межами. Без зайвих накладок.</p>
+          <div class="separator"></div>
+          <div class="section-title"><svg class="ico"><use href="#i-globe"/></svg><span id="countryTitle">ПЕРЕЙТИ ДО РЕГІОНУ</span></div>
+          <div class="country-tabs"><button class="country active" id="focusUa" type="button">Україна</button><button class="country" id="focusBy" type="button">Білорусь</button><button class="country" id="focusRu" type="button">РФ · захід</button></div>
+          <div class="separator"></div>
+          <div class="section-title"><svg class="ico"><use href="#i-search"/></svg><span id="searchTitle">ПОШУК РАЙОНІВ</span></div>
+          <label class="search-box"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><input id="districtSearch" type="search" placeholder="Введіть назву району…" autocomplete="off" spellcheck="false"><span class="search-key">⌕</span></label>
+          <div class="load-status" id="loadStatus"><span class="status-led"></span><span id="statusText">Завантаження геоданих…</span></div>
+          <div class="search-results" id="districtResults" aria-live="polite"></div>
+          <section class="selection" id="selectedPanel" hidden><div class="selection-caption" id="selectedTitle">ВИБРАНИЙ РАЙОН</div><strong id="selectedName">—</strong><span class="selection-oblast" id="selectedRegion"></span><button type="button" id="clearBtn"><svg class="ico"><use href="#i-x"/></svg><span id="clearText">Скинути вибір</span></button></section>
+          <div class="separator"></div>
+          <div class="section-title"><svg class="ico"><use href="#i-layers"/></svg><span id="layersTitle">АДМІНІСТРАТИВНІ МЕЖІ</span></div>
+          <label class="layer-row"><span class="layer-line oblast-key"></span><span class="layer-desc"><strong id="oblastLabel">Області</strong><small id="oblastSub">Виразний контур</small></span><input id="oblastToggle" type="checkbox" checked><span class="switch" aria-hidden="true"></span></label>
+          <label class="layer-row"><span class="layer-line district-key"></span><span class="layer-desc"><strong id="raionLabel">Райони</strong><small id="raionSub">Ледь помітні до наведення</small></span><input id="raionToggle" type="checkbox" checked><span class="switch" aria-hidden="true"></span></label>
+          <div class="note"><span class="note-pip"></span><span id="noteText">Крим, Донецька й Луганська області — у складі України. Мапа демонстраційна.</span></div>
         </div>
-        <footer class="sidebar-footer"><span class="footer-mark">A/UA</span><div><strong id="footerStage">ЕТАП 1.2</strong><small id="footerHint">Картографічна основа</small></div><span class="footer-version">v1.2</span></footer>
+        <div class="side-footer"><span class="footer-logo">A<span>/</span>UA</span><div><strong>MAP ENGINE</strong><small id="stageText">ЕТАП 1.3 · ОПТИМІЗАЦІЯ</small></div><span class="build-version">1.3</span></div>
       </aside>
-      <section class="map-area" id="mapArea" aria-label="Мапа України">
+      <section class="map-wrap" id="mapWrap" aria-label="Мапа України та сусідніх територій">
         <div id="map"></div>
-        <div class="map-top-hud"><span class="hud-led"></span><span id="mapHudTitle">УКРАЇНА</span><span class="hud-slash">/</span><span id="mapHudSub">КАРТОГРАФІЧНИЙ ОГЛЯД</span></div>
-        <div class="map-right-actions"><button type="button" id="homeBtn" title="Показати Україну" aria-label="Показати Україну"><svg class="icon"><use href="#ic-crosshair"/></svg></button><button type="button" id="fullscreenBtn" title="На весь екран" aria-label="На весь екран"><svg class="icon"><use href="#ic-expand"/></svg></button></div>
-        <div class="map-bottom-hud"><div class="online-dot"></div><span id="mapState">КАРТА АКТИВНА</span><span class="hud-separator"></span><span id="coordinateReadout">49.00° N · 32.00° E</span></div>
-        <div class="scale-caption" id="scaleCaption">ГЕОГРАФІЧНА СХЕМА · ДЕМОНСТРАЦІЯ</div>
+        <div class="map-chip"><span class="map-chip-led"></span><span id="mapChipText">УКРАЇНА · БІЛОРУСЬ · РФ</span></div>
+        <div class="map-actions"><button id="homeBtn" title="Показати Україну" aria-label="Показати Україну"><svg class="ico"><use href="#i-home"/></svg></button><button id="fullscreenBtn" title="На весь екран" aria-label="На весь екран"><svg class="ico"><use href="#i-expand"/></svg></button></div>
+        <div class="map-bottom"><span class="bottom-led"></span><span id="mapState">МАПА АКТИВНА</span><span class="bottom-separator"></span><span id="zoomReadout">Масштаб 5×</span></div>
+        <div class="source-attribution" id="sourceInfo">Межі: ukrainian_geodata · CC BY 4.0</div>
       </section>
     </main>
   </div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="./app.js"></script>
+  <script src="./app.js?v=1.3"></script>
 </body>
 </html>
