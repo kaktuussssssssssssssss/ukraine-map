@@ -8,10 +8,10 @@
   <title>ATLAS UA — Мапа України</title>
   <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="./leaflet-core.css?v=1.7">
-  <link rel="stylesheet" href="./style.css?v=1.7">
-  <link rel="stylesheet" href="./game.css?v=1.7">
-  <link rel="stylesheet" href="./radar.css?v=1.7">
+  <link rel="stylesheet" href="./leaflet-core.css?v=1.8">
+  <link rel="stylesheet" href="./style.css?v=1.8">
+  <link rel="stylesheet" href="./game.css?v=1.8">
+  <link rel="stylesheet" href="./radar.css?v=1.8">
 </head>
 <body>
   <svg xmlns="http://www.w3.org/2000/svg" class="svg-defs" aria-hidden="true">
@@ -66,6 +66,17 @@
               <label class="radar-map-toggle"><input type="checkbox" id="radarMapToggle" checked><span id="radarShowMapLabel">Радар на всю мапу</span></label>
               <p class="radar-note" id="radarNote">Вигадані навчальні цілі. Жодних реальних координат польоту чи прогнозів.</p>
             </details>
+            <div class="scenario-threat-picker">
+              <label for="scenarioThreat" id="scenarioThreatLabel">ТИП ІГРОВОЇ ПОДІЇ</label>
+              <select id="scenarioThreat" aria-describedby="scenarioThreatHelp">
+                <option value="uav">Навчальний БПЛА</option>
+                <option value="ballistic">Умовна балістична загроза</option>
+                <option value="kab">Умовна авіаційна загроза</option>
+                <option value="banderole">Умовний об’єкт «Бандероль»</option>
+                <option value="missile">Умовна ракетна загроза</option>
+              </select>
+              <small id="scenarioThreatHelp">Авто: жовтий для БПЛА; червоний лише для обраних небезпечних класів. Це ігрові правила, не реальний прогноз.</small>
+            </div>
             <div class="scenario-status" id="scenarioStatus">Авто: оберіть район і запустіть навчальний сценарій. Без випадкових тривог.</div>
             <div class="sim-utility"><button id="simRandomDistrict" type="button">◈ <span id="simRandomLabel">Випадковий район</span></button><button id="simReset" class="destructive" type="button">↺ <span id="simResetLabel">Скинути</span></button></div>
             <details class="sim-log" open><summary><span id="simLogHeading">ЖУРНАЛ ПОДІЙ</span><span id="simEventCount">0</span></summary><ol id="simEvents" aria-live="polite"></ol></details>
@@ -93,7 +104,7 @@
           <div class="note"><span class="note-pip"></span><span id="noteText">Крим, Донецька й Луганська області — у складі України. Мапа демонстраційна.</span></div>
           </div>
         </div>
-        <div class="side-footer"><span class="footer-logo">A<span>/</span>UA</span><div><strong>MAP ENGINE</strong><small id="stageText">ЕТАП 1.7 · РАДАР НА МАПІ</small></div><span class="build-version">1.7</span></div>
+        <div class="side-footer"><span class="footer-logo">A<span>/</span>UA</span><div><strong>MAP ENGINE</strong><small id="stageText">ЕТАП 1.8 · РАДАР У КООРДИНАТАХ</small></div><span class="build-version">1.8</span></div>
       </aside>
       <section class="map-wrap" id="mapWrap" aria-label="Мапа України та сусідніх територій">
         <div id="map"></div>
@@ -109,8 +120,8 @@
     <dialog class="sim-confirm" id="simConfirm"><form method="dialog"><div class="sim-confirm-icon">↺</div><h2 id="confirmTitle">Скинути симуляцію?</h2><p id="confirmDetail">Усі ігрові тривоги будуть вимкнені.</p><div class="sim-confirm-actions"><button type="submit" value="cancel" id="confirmCancel">Скасувати</button><button type="submit" value="reset" class="destructive" id="confirmAccept">Скинути</button></div></form></dialog>
   </div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="./app.js?v=1.7"></script>
-  <script src="./game.js?v=1.7"></script>
-  <script src="./radar.js?v=1.7"></script>
+  <script src="./app.js?v=1.8"></script>
+  <script src="./game.js?v=1.8"></script>
+  <script src="./radar.js?v=1.8"></script>
 </body>
 </html>

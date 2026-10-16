@@ -1,4 +1,4 @@
-/* ATLAS UA 1.7 — fictional fullscreen radar drawn directly over map.
+/* ATLAS UA 1.8 — fictional radar anchored to a map latitude/longitude.
    No real radar data, weapons specifications or strike planning. */
 'use strict';
 (() => {
@@ -8,6 +8,10 @@
  const ctx=cvs.getContext('2d',{alpha:true});if(!ctx)return;
  const map=api.map;const el=id=>document.getElementById(id);
  const TWO=Math.PI*2,PERIOD=12; // 12 game seconds == 4 actual seconds at 1×
+ // A stable, arbitrary *fictional* center in Ukraine. Not the location of a real radar.
+ // It is stored as a LatLng, NEVER derived from the viewport/screen center.
+ const ORIGIN=Object.freeze({lat:49.17,lng:31.31});
+ function originPoint(){return map.latLngToContainerPoint(L.latLng(ORIGIN.lat,ORIGIN.lng));}
  const types=[
   {symbol:'◇',kind:'probe',color:'#3adcb0',uk:'Навчальний БПЛА',ru:'Учебный БПЛА'},
   {symbol:'▲',kind:'fast',color:'#f2cb77',uk:'Швидка мітка',ru:'Быстрая отметка'},
@@ -58,13 +62,20 @@
   if(!viewW||!viewH)return;
   ctx.clearRect(0,0,viewW,viewH);if(!enabled)return;
   const angle=(now/PERIOD*TWO)%TWO;
-  const cx=viewW*.5,cy=viewH*.5,far=Math.hypot(viewW,viewH);
-  // Full viewport revolving green sweep line and subtle trailing sector.
+  // Geographically anchored pivot: follows the map's pan and zoom projection.
+  // The viewport may move independently, but the geographic origin stays fixed.
+  const pivot=originPoint(),cx=pivot.x,cy=pivot.y;
+  const far=Math.min(100000,Math.hypot(Math.max(Math.abs(cx),Math.abs(cx-viewW)),Math.max(Math.abs(cy),Math.abs(cy-viewH)))+80);
+  // Minimal line avoids full-screen tint and expensive giant glow.
+
   ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);
-  const grad=ctx.createLinearGradient(0,0,far,0);
-  grad.addColorStop(0,'rgba(64,244,158,.0)');grad.addColorStop(.18,'rgba(56,232,151,.07)');grad.addColorStop(1,'rgba(57,241,163,.09)');
-  ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,far,-.10,0);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
-  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(far,0);ctx.strokeStyle='rgba(70,246,164,.72)';ctx.lineWidth=1.8;ctx.shadowColor='#41dba0';ctx.shadowBlur=8;ctx.stroke();ctx.restore();
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(far,0);
+  ctx.strokeStyle='rgba(69,240,148,.82)';ctx.lineWidth=1.4;ctx.shadowColor='#46eaa0';ctx.shadowBlur=5;ctx.stroke();ctx.restore();
+  // A tiny unobtrusive geographic pivot, visible only while it is on-screen.
+  if(cx>=0&&cy>=0&&cx<=viewW&&cy<=viewH){
+   ctx.save();ctx.strokeStyle='rgba(61,231,159,.7)';ctx.lineWidth=1;
+   ctx.beginPath();ctx.arc(cx,cy,4,0,TWO);ctx.stroke();ctx.restore();
+  }
   // Continuous real positions remain hidden; only a discrete, fading snapshot is drawn.
   if(lastAngle!==null&&!game.isPaused()&&now>=lastTime){
    const travel=(now-lastTime)/PERIOD*TWO;
@@ -97,14 +108,14 @@
  function updateLanguage(){
   const uk=language()==='uk';
   const copy={
-   radarHeading:uk?'РАДАР НА МАПІ':'РАДАР НА КАРТЕ',radarBadge:uk?'МОДУЛЬ 03':'МОДУЛЬ 03',
+   radarHeading:uk?'РАДАР · ГЕОПРИВ’ЯЗКА':'РАДАР · ГЕОПРИВЯЗКА',radarBadge:uk?'МОДУЛЬ 03':'МОДУЛЬ 03',
    radarTargetsLabel:uk?'УМОВНІ ЦІЛІ':'УСЛОВНЫЕ ЦЕЛИ',radarVisibleLabel:uk?'Видно після сканування':'Видны после сканирования',
-   radarSpinLabel:uk?'СКАНУВАННЯ НА ВСЮ МАПУ · 4 С / 1×':'СКАНИРОВАНИЕ ВСЕЙ КАРТЫ · 4 С / 1×',
+   radarSpinLabel:uk?'ЦЕНТР У КООРДИНАТАХ МАПИ · 4 С / 1×':'ЦЕНТР В КООРДИНАТАХ КАРТЫ · 4 С / 1×',
    radarSweepLabel:uk?'Мітки з’являються після проходу променя та згасають.':'Метки появляются после прохода луча и затухают.',
    radarSpawnLabel:uk?'Додати навчальну мітку':'Добавить учебную отметку',radarClearLabel:uk?'Очистити':'Очистить',
-   radarShowMapLabel:uk?'Радар на всю мапу':'Радар на всю карту',
+   radarShowMapLabel:uk?'Показати геоприв’язаний радар':'Показать геопривязанный радар',
    radarNote:uk?'Вигадані навчальні цілі. Не відображає реальні дрони та ракети.':'Вымышленные учебные цели. Не показывает реальные дроны и ракеты.',
-   radarMapCaption:uk?'● ІГРОВЕ СКАНУВАННЯ':'● ИГРОВОЕ СКАНИРОВАНИЕ'
+   radarMapCaption:uk?'● РАДАР · ЦЕНТР УКРАЇНИ':'● РАДАР · ЦЕНТР УКРАИНЫ'
   };
   for(const [id,value] of Object.entries(copy))if(el(id))el(id).textContent=value;
  }
@@ -117,5 +128,5 @@
  window.addEventListener('resize',resize);
  map.on('resize moveend zoomend',()=>{if(!el('mapWrap'))return;render();});
  resize();updateLanguage();requestAnimationFrame(animation);
- window.ATLAS_RADAR={spawn,clear,count:()=>items.length,snapshotCount:()=>seen.size,redraw:render};
+ window.ATLAS_RADAR={spawn,clear,count:()=>items.length,snapshotCount:()=>seen.size,redraw:render,getOrigin:()=>({...ORIGIN}),getOriginPoint:()=>{const p=originPoint();return {x:p.x,y:p.y};}};
 })();

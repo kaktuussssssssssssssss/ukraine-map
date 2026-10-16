@@ -98,3 +98,10 @@
 .game-hit:hover{background:#254857;border-color:#5b979f}
 .game-hit strong{font-size:11px}.game-hit small{font-size:9px;color:#8eabb7}
 .game-hit-empty{font-size:11px;color:#8facb8;padding:9px}
+
+/* Stage 1.8 — auto scenario classification */
+.scenario-threat-picker{display:flex;flex-direction:column;gap:7px;margin-top:12px;padding:11px 12px 9px;background:#102431;border:1px solid #294c5e;border-radius:9px}
+.scenario-threat-picker label{font-size:9px;font-weight:850;letter-spacing:.08em;color:#8dced0}
+.scenario-threat-picker select{width:100%;max-width:100%;min-width:0;padding:10px 9px;background:#132f3c;border:1px solid #396374;border-radius:7px;color:#e5f5f3;font:inherit;font-size:11px;cursor:pointer}
+.scenario-threat-picker select:focus-visible{outline:2px solid #65caac;outline-offset:2px}
+.scenario-threat-picker small{font-size:9px;line-height:1.5;color:#92afbe}

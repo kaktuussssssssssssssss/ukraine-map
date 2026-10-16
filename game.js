@@ -1,4 +1,4 @@
-/* ATLAS UA 1.7 — a LOCAL fictional air-alert simulator.
+/* ATLAS UA 1.8 — a LOCAL fictional air-alert simulator.
    Never uses real alerts, real-time intelligence, or operational weapon data.
    All values are browser-local and not shared between visitors. */
 'use strict';
@@ -36,6 +36,14 @@
    modeSetAuto:'Автоматический режим включён (без случайных событий)',modeSetManual:'Включён ручной режим',resume:'Время возобновлено',pause:'Время остановлено',
    reset:'Симуляция сброшена',defaultRegion:'Украина',demo:'ДЕМО · НЕ РЕАЛЬНЫЕ ТРЕВОГИ'
   }
+ };
+ // Illustrative event categories only. No real warning thresholds or weapons data.
+ const threatClasses={
+  uav:{level:'yellow',uk:'Навчальний БПЛА',ru:'Учебный БПЛА'},
+  ballistic:{level:'red',uk:'Умовна балістична загроза',ru:'Условная баллистическая угроза'},
+  kab:{level:'red',uk:'Умовна авіаційна загроза',ru:'Условная авиационная угроза'},
+  banderole:{level:'red',uk:'Умовний об’єкт «Бандероль»',ru:'Условный объект «Бандероль»'},
+  missile:{level:'red',uk:'Умовна ракетна загроза',ru:'Условная ракетная угроза'}
  };
  const state={levels:new Map(),started:new Map(),mode:'manual',speed:1,paused:false,time:0,events:[],nextEvent:12,allFeatures:[],scenario:null};
  let selected=[], language=api.getLanguage(), lastClock=-1, lastTick=performance.now();
@@ -97,7 +105,7 @@
  }
  function eventCaption(e){
   const t=tr();
-  if(e.type==='scenarioStart')return language==='uk'?'Запущено навчальний сценарій':'Запущен учебный сценарий';
+  if(e.type==='scenarioStart'){const cl=threatClasses[e.threat]||threatClasses.uav;return (language==='uk'?'Запущено сценарій: ':'Запущен сценарий: ')+cl[language];}
   if(e.type==='levelBulk')return `${e.count} ${language==='uk'?'районів':'районов'} · ${t['level'+(e.level==='red'?'Red':e.level==='yellow'?'Yellow':'Off')]}`;
   if(e.type==='level')return `${e.name||'—'} · ${t['level'+(e.level==='red'?'Red':e.level==='yellow'?'Yellow':'Off')]} (${e.origin==='auto'?t.reasonAuto:t.reasonManual})`;
   return t[e.type]||'';
@@ -178,6 +186,9 @@
   el('modeManual').textContent=t.modeManual;el('modeAuto').textContent=t.modeAuto;
   el('gameSearch').placeholder=t.gameSearchPlaceholder;el('tabGame').lastElementChild.textContent=t.tabGame;el('tabGeography').lastElementChild.textContent=t.tabGeography;
   renderHits();
+  el('scenarioThreatLabel').textContent=language==='uk'?'ТИП ІГРОВОЇ ПОДІЇ':'ТИП ИГРОВОГО СОБЫТИЯ';
+  el('scenarioThreatHelp').textContent=language==='uk'?'Авто: жовтий для БПЛА; червоний тільки для обраних небезпечних класів. Ігрові правила, не реальний прогноз.':'Авто: жёлтый для БПЛА; красный только для выбранных опасных классов. Игровые правила, не реальный прогноз.';
+  for(const opt of el('scenarioThreat').options){const c=threatClasses[opt.value];if(c)opt.textContent=c[language];}
   renderMode();renderEvents();statusScenario();
  }
  function alertSetMany(features,level,origin='manual'){
@@ -206,15 +217,16 @@
   const node=el('scenarioStatus');if(!node)return;
   const s=state.scenario;
   const uk=language==='uk';
-  node.textContent=s?(uk?`Сценарій: ${s.names.join(', ')} · етап ${Math.max(1,s.phase+1)}/3`:`Сценарий: ${s.names.join(', ')} · этап ${Math.max(1,s.phase+1)}/3`):
+  node.textContent=s?(uk?`Сценарій: ${threatClasses[s.threat]?.uk||threatClasses.uav.uk} · ${s.names.join(', ')} · етап ${Math.max(1,s.phase+1)}/3`:`Сценарий: ${threatClasses[s.threat]?.ru||threatClasses.uav.ru} · ${s.names.join(', ')} · этап ${Math.max(1,s.phase+1)}/3`):
    (uk?'Авто: виберіть район та запустіть навчальний сценарій. Без випадкових тривог.':'Авто: выбери район и запусти учебный сценарий. Без случайных тревог.');
  }
  function startScenario(){
   if(!selected.length){statusScenario();el('scenarioStatus').textContent=language==='uk'?'Спершу виберіть район на мапі (Ctrl + клік — кілька).':'Сначала выбери район на карте (Ctrl + клик — несколько).';return;}
   if(state.mode!=='auto')setMode('auto');
-  state.scenario={keys:selected.map(api.getKey),names:selected.map(api.getName),start:state.time,phase:-1};
+  const threat=Object.hasOwn(threatClasses,el('scenarioThreat').value)?el('scenarioThreat').value:'uav';
+  state.scenario={keys:selected.map(api.getKey),names:selected.map(api.getName),start:state.time,phase:-1,threat};
   // The selected district names are used only to select visual alert polygons.
-  statusScenario();log({type:'scenarioStart'});
+  statusScenario();log({type:'scenarioStart',threat:state.scenario.threat});
  }
  function stopScenario(){state.scenario=null;statusScenario();}
  function advanceScenario(){
@@ -225,7 +237,7 @@
   s.phase=phase;
   if(phase<0)return;
   const features=state.allFeatures.filter(f=>s.keys.includes(api.getKey(f)));
-  if(features.length)alertSetMany(features,phase===0?'yellow':phase===1?'red':'off','auto');
+  if(features.length&&(phase===0||phase===2))alertSetMany(features,phase===2?'off':(threatClasses[s.threat]?.level||'yellow'),'auto');
   if(phase>=2)stopScenario();else statusScenario();
  }
  function tick(){
@@ -242,7 +254,7 @@
   renderMode();statusScenario();el('simClock').textContent='00:00:00';log({type:'reset'});
  }
  read();
- window.ATLAS_GAME={getLevel,getAlertInfo,getTime:()=>state.time,getSpeed:()=>state.speed,isPaused:()=>state.paused,startScenario};
+ window.ATLAS_GAME={getLevel,getAlertInfo,getTime:()=>state.time,getSpeed:()=>state.speed,isPaused:()=>state.paused,startScenario,getScenario:()=>state.scenario&&({...state.scenario}),getThreatClasses:()=>({...threatClasses})};
  // Important: the basemap and all existing geography controls stay untouched.
  window.addEventListener('atlas:select',e=>{selected=e.detail?.features||[];renderTarget();});
  window.addEventListener('atlas:districts-ready',e=>{
