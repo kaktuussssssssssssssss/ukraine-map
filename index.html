@@ -8,8 +8,8 @@
   <title>ATLAS UA — Мапа України</title>
   <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoT7AqT4rPxIh0=" crossorigin="">
-  <link rel="stylesheet" href="./style.css?v=1.3">
+  <link rel="stylesheet" href="./leaflet-core.css?v=1.4">
+  <link rel="stylesheet" href="./style.css?v=1.4">
 </head>
 <body>
   <svg xmlns="http://www.w3.org/2000/svg" class="svg-defs" aria-hidden="true">
@@ -51,7 +51,7 @@
           <label class="layer-row"><span class="layer-line district-key"></span><span class="layer-desc"><strong id="raionLabel">Райони</strong><small id="raionSub">Ледь помітні до наведення</small></span><input id="raionToggle" type="checkbox" checked><span class="switch" aria-hidden="true"></span></label>
           <div class="note"><span class="note-pip"></span><span id="noteText">Крим, Донецька й Луганська області — у складі України. Мапа демонстраційна.</span></div>
         </div>
-        <div class="side-footer"><span class="footer-logo">A<span>/</span>UA</span><div><strong>MAP ENGINE</strong><small id="stageText">ЕТАП 1.3 · ОПТИМІЗАЦІЯ</small></div><span class="build-version">1.3</span></div>
+        <div class="side-footer"><span class="footer-logo">A<span>/</span>UA</span><div><strong>MAP ENGINE</strong><small id="stageText">ЕТАП 1.4 · СТАБІЛЬНА МАПА</small></div><span class="build-version">1.4</span></div>
       </aside>
       <section class="map-wrap" id="mapWrap" aria-label="Мапа України та сусідніх територій">
         <div id="map"></div>
@@ -63,6 +63,6 @@
     </main>
   </div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="./app.js?v=1.3"></script>
+  <script src="./app.js?v=1.4"></script>
 </body>
 </html>

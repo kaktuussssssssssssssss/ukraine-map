@@ -1,4 +1,4 @@
-/* ATLAS UA / Stage 1.3 — geography only. No real alerts or real-time tracking.
+/* ATLAS UA / Stage 1.4 — geography only. No real alerts or real-time tracking.
  * Administrative boundaries: https://github.com/slawomirmatuszak/ukrainian_geodata (CC BY 4.0)
  * Lightweight Leaflet + Canvas. OSM base tiles, no API key, no worldwide masks.
  */
@@ -6,8 +6,8 @@
 
 const $=id=>document.getElementById(id);
 const TEXT={
-  uk:{brandSub:'Інтерактивна мапа',topLabel:'КАРТОГРАФІЧНИЙ ОГЛЯД',demoLabel:'ДЕМО · НЕ РЕАЛЬНІ ТРИВОГИ',sectionEyebrow:'МОДУЛЬ 01 / ГЕОГРАФІЯ',heroTitle:'Простір.<br><span>Деталі.</span>',heroSub:'Чиста мапа з населеними пунктами та адміністративними межами. Без зайвих накладок.',countryTitle:'ПЕРЕЙТИ ДО РЕГІОНУ',ua:'Україна',by:'Білорусь',ru:'РФ · захід',searchTitle:'ПОШУК РАЙОНІВ',searchPlaceholder:'Введіть назву району…',load:'Завантаження меж районів…',ready:'Районів завантажено: ',partial:'Області готові · Завантаження районів…',fail:'Не вдалося завантажити райони',noMatches:'Районів не знайдено',selectedTitle:'ВИБРАНИЙ РАЙОН',clearText:'Скинути вибір',layersTitle:'АДМІНІСТРАТИВНІ МЕЖІ',oblastLabel:'Області',oblastSub:'Виразний контур',raionLabel:'Райони',raionSub:'Ледь помітні до наведення',noteText:'Крим, Донецька й Луганська області — у складі України. Мапа демонстраційна.',stageText:'ЕТАП 1.3 · ОПТИМІЗАЦІЯ',mapChipText:'УКРАЇНА · БІЛОРУСЬ · РФ',mapState:'МАПА АКТИВНА',zoom:'Масштаб',home:'Показати Україну',full:'На весь екран',openMenu:'Відкрити панель',unknown:'Район',noRegion:'Україна'},
-  ru:{brandSub:'Интерактивная карта',topLabel:'КАРТОГРАФИЧЕСКИЙ ОБЗОР',demoLabel:'ДЕМО · НЕ РЕАЛЬНЫЕ ТРЕВОГИ',sectionEyebrow:'МОДУЛЬ 01 / ГЕОГРАФИЯ',heroTitle:'Пространство.<br><span>Детали.</span>',heroSub:'Чистая карта с городами и административными границами. Без лишних наложений.',countryTitle:'ПЕРЕЙТИ К РЕГИОНУ',ua:'Украина',by:'Беларусь',ru:'РФ · запад',searchTitle:'ПОИСК РАЙОНОВ',searchPlaceholder:'Введите название района…',load:'Загрузка границ районов…',ready:'Районов загружено: ',partial:'Области готовы · Загрузка районов…',fail:'Не удалось загрузить районы',noMatches:'Районы не найдены',selectedTitle:'ВЫБРАННЫЙ РАЙОН',clearText:'Снять выделение',layersTitle:'АДМИНИСТРАТИВНЫЕ ГРАНИЦЫ',oblastLabel:'Области',oblastSub:'Заметный контур',raionLabel:'Районы',raionSub:'Почти незаметны до наведения',noteText:'Крым, Донецкая и Луганская области — в составе Украины. Карта демонстрационная.',stageText:'ЭТАП 1.3 · ОПТИМИЗАЦИЯ',mapChipText:'УКРАИНА · БЕЛАРУСЬ · РФ',mapState:'КАРТА АКТИВНА',zoom:'Масштаб',home:'Показать Украину',full:'На весь экран',openMenu:'Открыть панель',unknown:'Район',noRegion:'Украина'}
+  uk:{brandSub:'Інтерактивна мапа',topLabel:'КАРТОГРАФІЧНИЙ ОГЛЯД',demoLabel:'ДЕМО · НЕ РЕАЛЬНІ ТРИВОГИ',sectionEyebrow:'МОДУЛЬ 01 / ГЕОГРАФІЯ',heroTitle:'Простір.<br><span>Деталі.</span>',heroSub:'Чиста мапа з населеними пунктами та адміністративними межами. Без зайвих накладок.',countryTitle:'ПЕРЕЙТИ ДО РЕГІОНУ',ua:'Україна',by:'Білорусь',ru:'РФ · захід',searchTitle:'ПОШУК РАЙОНІВ',searchPlaceholder:'Введіть назву району…',load:'Завантаження меж районів…',ready:'Районів завантажено: ',partial:'Області готові · Завантаження районів…',fail:'Не вдалося завантажити райони',noMatches:'Районів не знайдено',selectedTitle:'ВИБРАНИЙ РАЙОН',clearText:'Скинути вибір',layersTitle:'АДМІНІСТРАТИВНІ МЕЖІ',oblastLabel:'Області',oblastSub:'Виразний контур',raionLabel:'Райони',raionSub:'Ледь помітні до наведення',noteText:'Крим, Донецька й Луганська області — у складі України. Мапа демонстраційна.',stageText:'ЕТАП 1.4 · СТАБІЛЬНА МАПА',mapChipText:'УКРАЇНА · БІЛОРУСЬ · РФ',mapState:'МАПА АКТИВНА',zoom:'Масштаб',home:'Показати Україну',full:'На весь екран',openMenu:'Відкрити панель',unknown:'Район',noRegion:'Україна'},
+  ru:{brandSub:'Интерактивная карта',topLabel:'КАРТОГРАФИЧЕСКИЙ ОБЗОР',demoLabel:'ДЕМО · НЕ РЕАЛЬНЫЕ ТРЕВОГИ',sectionEyebrow:'МОДУЛЬ 01 / ГЕОГРАФИЯ',heroTitle:'Пространство.<br><span>Детали.</span>',heroSub:'Чистая карта с городами и административными границами. Без лишних наложений.',countryTitle:'ПЕРЕЙТИ К РЕГИОНУ',ua:'Украина',by:'Беларусь',ru:'РФ · запад',searchTitle:'ПОИСК РАЙОНОВ',searchPlaceholder:'Введите название района…',load:'Загрузка границ районов…',ready:'Районов загружено: ',partial:'Области готовы · Загрузка районов…',fail:'Не удалось загрузить районы',noMatches:'Районы не найдены',selectedTitle:'ВЫБРАННЫЙ РАЙОН',clearText:'Снять выделение',layersTitle:'АДМИНИСТРАТИВНЫЕ ГРАНИЦЫ',oblastLabel:'Области',oblastSub:'Заметный контур',raionLabel:'Районы',raionSub:'Почти незаметны до наведения',noteText:'Крым, Донецкая и Луганская области — в составе Украины. Карта демонстрационная.',stageText:'ЭТАП 1.4 · СТАБИЛЬНАЯ КАРТА',mapChipText:'УКРАИНА · БЕЛАРУСЬ · РФ',mapState:'КАРТА АКТИВНА',zoom:'Масштаб',home:'Показать Украину',full:'На весь экран',openMenu:'Открыть панель',unknown:'Район',noRegion:'Украина'}
 };
 const VIEWS={ua:[[44.2,22.1],[52.5,40.4]],by:[[51.15,23.1],[56.2,33.7]],ru:[[47.2,27.7],[59.5,51.5]]};
 const VIEW_LIMITS=[[41,18],[62,64]];
@@ -19,15 +19,15 @@ let oblastLayer=null, raionLayer=null, selectedLayer=null, raionFeatures=[], rai
 const raionPaths=new WeakMap();
 
 const map=L.map('map',{
-  zoomControl:false,preferCanvas:true,zoomSnap:.25,zoomDelta:.5,minZoom:3.5,maxZoom:19,
+  zoomControl:false,preferCanvas:true,zoomSnap:.5,zoomDelta:.5,minZoom:3.5,maxZoom:19,
   maxBounds:VIEW_LIMITS,maxBoundsViscosity:.85,worldCopyJump:false,
-  fadeAnimation:false,markerZoomAnimation:false,zoomAnimation:true,
+  fadeAnimation:false,markerZoomAnimation:false,zoomAnimation:false,
   attributionControl:true
 });
 map.fitBounds(VIEWS.ua,{padding:[24,24],maxZoom:7,animate:false});
 // The same dependable, readable base map from stage 1.0. No CARTO API key needed.
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
-  maxZoom:19,maxNativeZoom:19,keepBuffer:2,updateWhenIdle:true,updateWhenZooming:false,
+  maxZoom:19,maxNativeZoom:19,keepBuffer:3,updateWhenIdle:true,updateWhenZooming:false,
   attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
 }).addTo(map);
 L.control.zoom({position:'bottomright'}).addTo(map);
@@ -179,11 +179,15 @@ document.addEventListener('fullscreenchange',()=>map.invalidateSize({animate:fal
 $('menuBtn').addEventListener('click',()=>{$('app').classList.toggle('menu-open');setTimeout(()=>map.invalidateSize({animate:false}),230)});
 $('mapWrap').addEventListener('click',()=>{if(innerWidth<=800)$('app').classList.remove('menu-open')});
 map.on('zoomend',()=>{showRaionLayer();$('zoomReadout').textContent=TEXT[lang].zoom+' '+map.getZoom().toFixed(1)});
-window.addEventListener('resize',()=>map.invalidateSize({animate:false}));
+let resizePending=false;
+function refreshMapSize(){if(resizePending)return;resizePending=true;requestAnimationFrame(()=>{resizePending=false;map.invalidateSize({animate:false,pan:false})});}
+window.addEventListener('resize',refreshMapSize);
+if('ResizeObserver' in window){new ResizeObserver(refreshMapSize).observe($('mapWrap'));}
+window.addEventListener('load',()=>setTimeout(refreshMapSize,40));
 
 applyLanguage();
 // Prioritise tiles / province outlines. Loading district geometries while the browser is idle
 // avoids a synchronous all-world SVG/Canvas workload in the first paint.
 loadOblasts();
-if('requestIdleCallback' in window)requestIdleCallback(loadRaions,{timeout:1300});
-else setTimeout(loadRaions,500);
+if('requestIdleCallback' in window)requestIdleCallback(loadRaions,{timeout:2500});
+else setTimeout(loadRaions,1200);
