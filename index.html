@@ -21,6 +21,17 @@
     </header>
     <section class="map-wrap" aria-label="Карта України">
       <div id="map"></div>
+      <aside class="district-panel" aria-label="Райони України">
+        <div class="panel-heading"><div><strong id="districtsTitle">Райони України</strong><small id="districtsSubtitle">Оберіть район на мапі або знайдіть його</small></div><button id="panelToggle" aria-label="Згорнути панель" title="Згорнути панель">−</button></div>
+        <div class="panel-body" id="panelBody">
+          <label class="sr-only" for="districtSearch">Пошук району</label>
+          <input id="districtSearch" type="search" placeholder="Пошук району…" autocomplete="off" />
+          <div id="districtLoading" class="district-loading" role="status">Завантаження меж районів…</div>
+          <div id="districtResults" class="district-results"></div>
+          <div id="selectedDistrict" class="selected-district" hidden><small id="selectedCaption">Обраний район</small><strong id="selectedName"></strong><span id="selectedExtra"></span><button id="deselectBtn" type="button">Скасувати вибір</button></div>
+          <div class="data-note" id="dataNote">Межі: адміністративний поділ 2020 · Геодані CC BY 4.0</div>
+        </div>
+      </aside>
       <div class="floating-controls">
         <button id="homeBtn" title="Показати всю Україну" aria-label="Показати всю Україну">⌂</button>
         <button id="fullscreenBtn" title="На весь екран" aria-label="На весь екран">⛶</button>
