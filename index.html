@@ -9,7 +9,8 @@
   <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="./leaflet-core.css?v=1.4">
-  <link rel="stylesheet" href="./style.css?v=1.4">
+  <link rel="stylesheet" href="./style.css?v=1.5">
+  <link rel="stylesheet" href="./game.css?v=1.5">
 </head>
 <body>
   <svg xmlns="http://www.w3.org/2000/svg" class="svg-defs" aria-hidden="true">
@@ -32,7 +33,33 @@
     </header>
     <main class="workarea">
       <aside class="sidebar" id="sidebar">
+        <div class="workspace-tabs" role="group" aria-label="Розділ панелі"><button id="tabGame" class="active" type="button" aria-pressed="true">✦ <span>Симуляція</span></button><button id="tabGeography" type="button" aria-pressed="false">▤ <span>Географія</span></button></div>
         <div class="side-scroll">
+          <div class="workspace-view" id="gameView">
+          <section class="game-panel" aria-labelledby="simHeading">
+            <div class="sim-panel-heading"><div><div class="game-eyebrow" id="simEyebrow">МОДУЛЬ 02 / СИМУЛЯЦІЯ</div><h2 id="simHeading">Центр тривог<span class="game-spark">.</span></h2></div><span class="game-local-tag" id="simTag">ЛОКАЛЬНО</span></div>
+            <p class="game-intro" id="simIntro">Навчальна симуляція. Жодних даних про реальні тривоги.</p>
+            <div class="sim-counters" role="status" aria-live="polite">
+              <div class="sim-counter"><span class="counter-dot red"></span><small id="redCounterLabel">ЧЕРВОНИЙ</small><strong id="redCounter">0</strong></div>
+              <div class="sim-counter"><span class="counter-dot yellow"></span><small id="yellowCounterLabel">ЖОВТИЙ</small><strong id="yellowCounter">0</strong></div>
+              <div class="sim-counter"><span class="counter-dot neutral"></span><small id="totalCounterLabel">ВСЬОГО</small><strong id="totalCounter">0</strong></div>
+            </div>
+            <div class="sim-mode-tabs" role="group" aria-label="Режим симуляції"><button class="active" id="modeManual" type="button" aria-pressed="true">Ручний</button><button id="modeAuto" type="button" aria-pressed="false">Авто</button></div>
+            <div class="game-lookup"><label for="gameSearch" id="gameSearchLabel">ШВИДКИЙ ПОШУК РАЙОНУ</label><input id="gameSearch" autocomplete="off" spellcheck="false" type="search" placeholder="Назва району…"><div id="gameHits" class="game-hits"></div></div>
+            <div class="sim-target" id="simTarget" aria-live="polite"><span class="sim-target-caption" id="simTargetCaption">ОБРАНИЙ РАЙОН</span><strong id="simTargetName">Оберіть район на мапі або в пошуку</strong><small id="simTargetRegion"></small></div>
+            <div class="sim-level-controls" role="group" aria-label="Встановити рівень тривоги">
+              <button class="sim-level-btn clear" id="levelOff" type="button" disabled><span class="sim-level-orb"></span><strong id="labelLevelOff">Зняти</strong></button>
+              <button class="sim-level-btn amber" id="levelYellow" type="button" disabled><span class="sim-level-orb"></span><strong id="labelLevelYellow">Жовтий</strong></button>
+              <button class="sim-level-btn crimson" id="levelRed" type="button" disabled><span class="sim-level-orb"></span><strong id="labelLevelRed">Червоний</strong></button>
+            </div>
+            <div class="sim-micro" id="simHint">Для керування натисніть на район.</div>
+            <div class="sim-clock"><div><span class="sim-clock-label" id="simClockLabel">ІГРОВИЙ ЧАС</span><strong id="simClock" class="mono">00:00:00</strong></div><button id="pauseSimulation" class="sim-play" type="button" aria-pressed="false" title="Пауза">Ⅱ</button></div>
+            <div class="sim-speed"><span id="simSpeedLabel">Швидкість</span><div class="sim-speed-buttons" role="group" aria-label="Швидкість часу"><button class="selected" data-speed="1" type="button">1×</button><button data-speed="2" type="button">2×</button><button data-speed="3" type="button">3×</button><button data-speed="4" type="button">4×</button><button data-speed="5" type="button">5×</button></div></div>
+            <div class="sim-utility"><button id="simRandomDistrict" type="button">◈ <span id="simRandomLabel">Випадковий район</span></button><button id="simReset" class="destructive" type="button">↺ <span id="simResetLabel">Скинути</span></button></div>
+            <details class="sim-log" open><summary><span id="simLogHeading">ЖУРНАЛ ПОДІЙ</span><span id="simEventCount">0</span></summary><ol id="simEvents" aria-live="polite"></ol></details>
+          </section>
+          </div>
+          <div class="workspace-view" id="geoView" hidden>
           <div class="eyebrow"><span class="eyebrow-accent"></span><span id="sectionEyebrow">МОДУЛЬ 01 / ГЕОГРАФІЯ</span></div>
           <h1 id="heroTitle">Простір.<br><span>Деталі.</span></h1>
           <p class="lead" id="heroSub">Чиста мапа з населеними пунктами та адміністративними межами. Без зайвих накладок.</p>
@@ -45,24 +72,30 @@
           <div class="load-status" id="loadStatus"><span class="status-led"></span><span id="statusText">Завантаження геоданих…</span></div>
           <div class="search-results" id="districtResults" aria-live="polite"></div>
           <section class="selection" id="selectedPanel" hidden><div class="selection-caption" id="selectedTitle">ВИБРАНИЙ РАЙОН</div><strong id="selectedName">—</strong><span class="selection-oblast" id="selectedRegion"></span><button type="button" id="clearBtn"><svg class="ico"><use href="#i-x"/></svg><span id="clearText">Скинути вибір</span></button></section>
+
+
           <div class="separator"></div>
           <div class="section-title"><svg class="ico"><use href="#i-layers"/></svg><span id="layersTitle">АДМІНІСТРАТИВНІ МЕЖІ</span></div>
           <label class="layer-row"><span class="layer-line oblast-key"></span><span class="layer-desc"><strong id="oblastLabel">Області</strong><small id="oblastSub">Виразний контур</small></span><input id="oblastToggle" type="checkbox" checked><span class="switch" aria-hidden="true"></span></label>
           <label class="layer-row"><span class="layer-line district-key"></span><span class="layer-desc"><strong id="raionLabel">Райони</strong><small id="raionSub">Ледь помітні до наведення</small></span><input id="raionToggle" type="checkbox" checked><span class="switch" aria-hidden="true"></span></label>
           <div class="note"><span class="note-pip"></span><span id="noteText">Крим, Донецька й Луганська області — у складі України. Мапа демонстраційна.</span></div>
+          </div>
         </div>
-        <div class="side-footer"><span class="footer-logo">A<span>/</span>UA</span><div><strong>MAP ENGINE</strong><small id="stageText">ЕТАП 1.4 · СТАБІЛЬНА МАПА</small></div><span class="build-version">1.4</span></div>
+        <div class="side-footer"><span class="footer-logo">A<span>/</span>UA</span><div><strong>MAP ENGINE</strong><small id="stageText">ЕТАП 1.4 · СТАБІЛЬНА МАПА</small></div><span class="build-version">1.5</span></div>
       </aside>
       <section class="map-wrap" id="mapWrap" aria-label="Мапа України та сусідніх територій">
         <div id="map"></div>
         <div class="map-chip"><span class="map-chip-led"></span><span id="mapChipText">УКРАЇНА · БІЛОРУСЬ · РФ</span></div>
+        <div class="map-alert-summary"><span class="map-alert-label" id="mapAlertLabel">ІГРОВІ ТРИВОГИ</span><span class="map-alert-count red"><span></span><b id="mapRedCount">0</b></span><span class="map-alert-count yellow"><span></span><b id="mapYellowCount">0</b></span><span class="map-auto-dot" id="mapAutoIndicator">РУЧНИЙ</span></div>
         <div class="map-actions"><button id="homeBtn" title="Показати Україну" aria-label="Показати Україну"><svg class="ico"><use href="#i-home"/></svg></button><button id="fullscreenBtn" title="На весь екран" aria-label="На весь екран"><svg class="ico"><use href="#i-expand"/></svg></button></div>
         <div class="map-bottom"><span class="bottom-led"></span><span id="mapState">МАПА АКТИВНА</span><span class="bottom-separator"></span><span id="zoomReadout">Масштаб 5×</span></div>
         <div class="source-attribution" id="sourceInfo">Межі: ukrainian_geodata · CC BY 4.0</div>
       </section>
     </main>
+    <dialog class="sim-confirm" id="simConfirm"><form method="dialog"><div class="sim-confirm-icon">↺</div><h2 id="confirmTitle">Скинути симуляцію?</h2><p id="confirmDetail">Усі ігрові тривоги будуть вимкнені.</p><div class="sim-confirm-actions"><button type="submit" value="cancel" id="confirmCancel">Скасувати</button><button type="submit" value="reset" class="destructive" id="confirmAccept">Скинути</button></div></form></dialog>
   </div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="./app.js?v=1.4"></script>
+  <script src="./app.js?v=1.5"></script>
+  <script src="./game.js?v=1.5"></script>
 </body>
 </html>
