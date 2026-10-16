@@ -1,4 +1,4 @@
-/* ATLAS UA / Stage 1.5 — geography and local fictional training alerts; no real alerts or tracking.
+/* ATLAS UA / Stage 1.6 — geography and local fictional training alerts; no real alerts or tracking.
  * Administrative boundaries: https://github.com/slawomirmatuszak/ukrainian_geodata (CC BY 4.0)
  * Lightweight Leaflet + Canvas. OSM base tiles, no API key, no worldwide masks.
  */
@@ -6,8 +6,8 @@
 
 const $=id=>document.getElementById(id);
 const TEXT={
-  uk:{brandSub:'Інтерактивна мапа',topLabel:'КАРТОГРАФІЧНИЙ ОГЛЯД',demoLabel:'ДЕМО · НЕ РЕАЛЬНІ ТРИВОГИ',sectionEyebrow:'МОДУЛЬ 01 / ГЕОГРАФІЯ',heroTitle:'Простір.<br><span>Деталі.</span>',heroSub:'Чиста мапа з населеними пунктами та адміністративними межами. Без зайвих накладок.',countryTitle:'ПЕРЕЙТИ ДО РЕГІОНУ',ua:'Україна',by:'Білорусь',ru:'РФ · захід',searchTitle:'ПОШУК РАЙОНІВ',searchPlaceholder:'Введіть назву району…',load:'Завантаження меж районів…',ready:'Районів завантажено: ',partial:'Області готові · Завантаження районів…',fail:'Не вдалося завантажити райони',noMatches:'Районів не знайдено',selectedTitle:'ВИБРАНИЙ РАЙОН',clearText:'Скинути вибір',layersTitle:'АДМІНІСТРАТИВНІ МЕЖІ',oblastLabel:'Області',oblastSub:'Виразний контур',raionLabel:'Райони',raionSub:'Ледь помітні до наведення',noteText:'Крим, Донецька й Луганська області — у складі України. Мапа демонстраційна.',stageText:'ЕТАП 1.5 · СИМУЛЯЦІЯ ТРИВОГ',mapChipText:'УКРАЇНА · БІЛОРУСЬ · РФ',mapState:'МАПА АКТИВНА',zoom:'Масштаб',home:'Показати Україну',full:'На весь екран',openMenu:'Відкрити панель',unknown:'Район',noRegion:'Україна'},
-  ru:{brandSub:'Интерактивная карта',topLabel:'КАРТОГРАФИЧЕСКИЙ ОБЗОР',demoLabel:'ДЕМО · НЕ РЕАЛЬНЫЕ ТРЕВОГИ',sectionEyebrow:'МОДУЛЬ 01 / ГЕОГРАФИЯ',heroTitle:'Пространство.<br><span>Детали.</span>',heroSub:'Чистая карта с городами и административными границами. Без лишних наложений.',countryTitle:'ПЕРЕЙТИ К РЕГИОНУ',ua:'Украина',by:'Беларусь',ru:'РФ · запад',searchTitle:'ПОИСК РАЙОНОВ',searchPlaceholder:'Введите название района…',load:'Загрузка границ районов…',ready:'Районов загружено: ',partial:'Области готовы · Загрузка районов…',fail:'Не удалось загрузить районы',noMatches:'Районы не найдены',selectedTitle:'ВЫБРАННЫЙ РАЙОН',clearText:'Снять выделение',layersTitle:'АДМИНИСТРАТИВНЫЕ ГРАНИЦЫ',oblastLabel:'Области',oblastSub:'Заметный контур',raionLabel:'Районы',raionSub:'Почти незаметны до наведения',noteText:'Крым, Донецкая и Луганская области — в составе Украины. Карта демонстрационная.',stageText:'ЭТАП 1.5 · СИМУЛЯЦИЯ ТРЕВОГ',mapChipText:'УКРАИНА · БЕЛАРУСЬ · РФ',mapState:'КАРТА АКТИВНА',zoom:'Масштаб',home:'Показать Украину',full:'На весь экран',openMenu:'Открыть панель',unknown:'Район',noRegion:'Украина'}
+  uk:{brandSub:'Інтерактивна мапа',topLabel:'КАРТОГРАФІЧНИЙ ОГЛЯД',demoLabel:'ДЕМО · НЕ РЕАЛЬНІ ТРИВОГИ',sectionEyebrow:'МОДУЛЬ 01 / ГЕОГРАФІЯ',heroTitle:'Простір.<br><span>Деталі.</span>',heroSub:'Чиста мапа з населеними пунктами та адміністративними межами. Без зайвих накладок.',countryTitle:'ПЕРЕЙТИ ДО РЕГІОНУ',ua:'Україна',by:'Білорусь',ru:'РФ · захід',searchTitle:'ПОШУК РАЙОНІВ',searchPlaceholder:'Введіть назву району…',load:'Завантаження меж районів…',ready:'Районів завантажено: ',partial:'Області готові · Завантаження районів…',fail:'Не вдалося завантажити райони',noMatches:'Районів не знайдено',selectedTitle:'ВИБРАНИЙ РАЙОН',clearText:'Скинути вибір',layersTitle:'АДМІНІСТРАТИВНІ МЕЖІ',oblastLabel:'Області',oblastSub:'Виразний контур',raionLabel:'Райони',raionSub:'Ледь помітні до наведення',noteText:'Крим, Донецька й Луганська області — у складі України. Мапа демонстраційна.',stageText:'ЕТАП 1.6 · ІГРОВА МАПА',mapChipText:'УКРАЇНА · БІЛОРУСЬ · РФ',mapState:'МАПА АКТИВНА',zoom:'Масштаб',home:'Показати Україну',full:'На весь екран',openMenu:'Відкрити панель',unknown:'Район',noRegion:'Україна'},
+  ru:{brandSub:'Интерактивная карта',topLabel:'КАРТОГРАФИЧЕСКИЙ ОБЗОР',demoLabel:'ДЕМО · НЕ РЕАЛЬНЫЕ ТРЕВОГИ',sectionEyebrow:'МОДУЛЬ 01 / ГЕОГРАФИЯ',heroTitle:'Пространство.<br><span>Детали.</span>',heroSub:'Чистая карта с городами и административными границами. Без лишних наложений.',countryTitle:'ПЕРЕЙТИ К РЕГИОНУ',ua:'Украина',by:'Беларусь',ru:'РФ · запад',searchTitle:'ПОИСК РАЙОНОВ',searchPlaceholder:'Введите название района…',load:'Загрузка границ районов…',ready:'Районов загружено: ',partial:'Области готовы · Загрузка районов…',fail:'Не удалось загрузить районы',noMatches:'Районы не найдены',selectedTitle:'ВЫБРАННЫЙ РАЙОН',clearText:'Снять выделение',layersTitle:'АДМИНИСТРАТИВНЫЕ ГРАНИЦЫ',oblastLabel:'Области',oblastSub:'Заметный контур',raionLabel:'Районы',raionSub:'Почти незаметны до наведения',noteText:'Крым, Донецкая и Луганская области — в составе Украины. Карта демонстрационная.',stageText:'ЭТАП 1.6 · ИГРОВАЯ КАРТА',mapChipText:'УКРАИНА · БЕЛАРУСЬ · РФ',mapState:'КАРТА АКТИВНА',zoom:'Масштаб',home:'Показать Украину',full:'На весь экран',openMenu:'Открыть панель',unknown:'Район',noRegion:'Украина'}
 };
 const VIEWS={ua:[[44.2,22.1],[52.5,40.4]],by:[[51.15,23.1],[56.2,33.7]],ru:[[47.2,27.7],[59.5,51.5]]};
 const VIEW_LIMITS=[[41,18],[62,64]];
@@ -15,7 +15,7 @@ const DATA_ROOT='https://cdn.jsdelivr.net/gh/slawomirmatuszak/ukrainian_geodata@
 const DATA_FALLBACK='https://raw.githubusercontent.com/slawomirmatuszak/ukrainian_geodata/main/';
 
 let lang='uk', focused='ua', oblastEnabled=true, raionEnabled=true;
-let oblastLayer=null, raionLayer=null, selectedLayer=null, raionFeatures=[], raionReady=false, oblastReady=false, dataFailed=false;
+let oblastLayer=null, raionLayer=null, selectedLayer=null, selectedLayers=new Set(), raionFeatures=[], raionReady=false, oblastReady=false, dataFailed=false;
 const raionPaths=new WeakMap();
 
 const map=L.map('map',{
@@ -50,7 +50,7 @@ function scheduleAlertSummary(){
  requestAnimationFrame(()=>{
   summaryScheduled=false;
   if(summaryLayer){map.removeLayer(summaryLayer);summaryLayer=null;}
-  if(!raionReady||!raionEnabled||map.getZoom()>=5)return;
+  if(!raionReady||!raionEnabled||map.getZoom()>=4.5)return;
   const features=raionFeatures.filter(f=>window.ATLAS_GAME?.getLevel?.(f)!=='off');
   if(!features.length)return;
   summaryLayer=L.geoJSON({type:'FeatureCollection',features},{
@@ -91,7 +91,7 @@ function districtKey(f){return (featureRegion(f)+'|'+featureName(f)).toLocaleLow
 // Styles are recalculated only when one district changes. No full-map redraw per frame.
 function visualStyle(layer){
  const hover=!!layer._atlasHover;
- const selected=selectedLayer===layer;
+ const selected=selectedLayers.has(layer);
  const status=window.ATLAS_GAME?.getLevel?.(layer.feature)||'off';
  if(status!=='off'){
   const red=status==='red';
@@ -103,20 +103,46 @@ function visualStyle(layer){
 function refreshDistrict(layer){if(layer)layer.setStyle(visualStyle(layer));}
 function refreshAllDistricts(){if(raionLayer)raionLayer.eachLayer(refreshDistrict);}
 function zoomDistrict(layer){const b=layer.getBounds();if(b&&b.isValid())map.fitBounds(b.pad(.2),{animate:true,maxZoom:10,duration:.6});}
-function chooseRaion(layer,zoom=true){
- if(selectedLayer && selectedLayer!==layer){const old=selectedLayer;selectedLayer=null;refreshDistrict(old);}
- selectedLayer=layer;refreshDistrict(layer);layer.bringToFront();
- const p=$('selectedPanel');p.hidden=false;
- $('selectedName').textContent=featureName(layer.feature);
- $('selectedRegion').textContent=featureRegion(layer.feature);
- if(zoom)zoomDistrict(layer);
+function informSelection(){
+ const features=[...selectedLayers].map(l=>l.feature);
+ const panel=$('selectedPanel');panel.hidden=!features.length;
+ if(features.length){
+  $('selectedName').textContent=features.length===1?featureName(features[0]):(lang==='uk'?`Вибрано районів: ${features.length}`:`Выбрано районов: ${features.length}`);
+  $('selectedRegion').textContent=features.length===1?featureRegion(features[0]):(lang==='uk'?'Ctrl + клік — додати або прибрати район':'Ctrl + клик — добавить или убрать район');
+ }
+ selectedLayer=[...selectedLayers].at(-1)||null;
  listResults();
- window.dispatchEvent(new CustomEvent('atlas:select',{detail:{feature:layer.feature}}));
- if(innerWidth<=800){$('app').classList.remove('menu-open');}
+ window.dispatchEvent(new CustomEvent('atlas:select',{detail:{feature:selectedLayer?.feature||null,features}}));
+}
+function chooseRaion(layer,zoom=true,additive=false){
+ if(additive){
+  if(selectedLayers.has(layer)){selectedLayers.delete(layer);refreshDistrict(layer)}
+  else{selectedLayers.add(layer);refreshDistrict(layer);layer.bringToFront();}
+ }else{
+  for(const old of selectedLayers){if(old!==layer){selectedLayers.delete(old);refreshDistrict(old)}}
+  selectedLayers.add(layer);refreshDistrict(layer);layer.bringToFront();
+ }
+ informSelection();
+ // Ctrl selection must never zoom the map or close the side panel.
+ if(zoom&&!additive&&selectedLayers.has(layer))zoomDistrict(layer);
+ if(!additive&&innerWidth<=800){$('app').classList.remove('menu-open');}
 }
 function clearRaion(){
- const previous=selectedLayer;selectedLayer=null;refreshDistrict(previous);$('selectedPanel').hidden=true;listResults();
- window.dispatchEvent(new CustomEvent('atlas:select',{detail:{feature:null}}));
+ for(const layer of selectedLayers){selectedLayers.delete(layer);refreshDistrict(layer)}
+ informSelection();
+}
+function districtTooltip(f){
+ const outer=document.createElement('div');outer.className='district-tip-content';
+ const title=document.createElement('strong');title.textContent=featureName(f);
+ const region=document.createElement('small');region.textContent=featureRegion(f);
+ const status=document.createElement('span');status.className='district-tip-status';
+ const info=window.ATLAS_GAME?.getAlertInfo?.(f);
+ const level=info?.level||'off';
+ status.classList.add('tip-'+level);
+ status.textContent=lang==='uk'?(level==='red'?'● Червона тривога':level==='yellow'?'● Жовта тривога':'● Тривоги немає'):(level==='red'?'● Красная тревога':level==='yellow'?'● Жёлтая тревога':'● Тревоги нет');
+ const elapsed=document.createElement('span');elapsed.className='district-tip-duration';
+ elapsed.textContent=(lang==='uk'?'Час тривоги: ':'Время тревоги: ')+(level==='off'?'—':info?.durationText||'00:00:00');
+ outer.append(title,region,status,elapsed);return outer;
 }
 function listResults(){
  const el=$('districtResults');el.replaceChildren();if(!raionReady)return;
@@ -130,14 +156,14 @@ function listResults(){
  if(!result.length){const p=document.createElement('p');p.className='empty-results';p.textContent=TEXT[lang].noMatches;el.append(p);return;}
  for(const f of result){
   const l=raionPaths.get(f);if(!l)continue;
-  const button=document.createElement('button');button.className='result'+(selectedLayer===l?' active':'');button.type='button';
+  const button=document.createElement('button');button.className='result'+(selectedLayers.has(l)?' active':'');button.type='button';
   const pin=document.createElementNS('http://www.w3.org/2000/svg','svg');pin.classList.add('ico');const use=document.createElementNS('http://www.w3.org/2000/svg','use');use.setAttribute('href','#i-pin');pin.append(use);
   const main=document.createElement('span');main.className='result-main';
   const title=document.createElement('strong');title.textContent=featureName(f);
   const region=document.createElement('small');region.textContent=featureRegion(f);
   main.append(title,region);
   const arr=document.createElementNS('http://www.w3.org/2000/svg','svg');arr.classList.add('ico','forward');const arrowUse=document.createElementNS('http://www.w3.org/2000/svg','use');arrowUse.setAttribute('href','#i-arrow');arr.append(arrowUse);
-  button.append(pin,main,arr);button.addEventListener('click',()=>chooseRaion(l));el.append(button);
+  button.append(pin,main,arr);button.addEventListener('click',e=>chooseRaion(l,true,e.ctrlKey||e.metaKey));el.append(button);
  }
 }
 function updateStatus(){
@@ -154,13 +180,13 @@ function applyLanguage(){
  $('fullscreenBtn').title=t.full;$('fullscreenBtn').setAttribute('aria-label',t.full);
  $('menuBtn').setAttribute('aria-label',t.openMenu);
  $('zoomReadout').textContent=t.zoom+' '+map.getZoom().toFixed(1);
- if(selectedLayer){$('selectedName').textContent=featureName(selectedLayer.feature);$('selectedRegion').textContent=featureRegion(selectedLayer.feature);}
+ if(selectedLayers.size){informSelection();}
  updateStatus();listResults();
  window.dispatchEvent(new CustomEvent('atlas:language',{detail:{lang}}));
 }
 function showRaionLayer(){
  // Loading polygons is deferred; rendering them at very small zoom levels is unnecessary.
- const visible=raionLayer && raionEnabled && map.getZoom()>=5;
+ const visible=raionLayer && raionEnabled && map.getZoom()>=4.5;
  if(!raionLayer)return;
  if(visible && !map.hasLayer(raionLayer))raionLayer.addTo(map);
  if(!visible && map.hasLayer(raionLayer))map.removeLayer(raionLayer);
@@ -198,10 +224,10 @@ async function loadRaions(){
    renderer:rayonRenderer,style:f=>{const level=window.ATLAS_GAME?.getLevel?.(f)||'off';return level==='red'?{...normalDistrict,color:'#ad3e47',fillColor:'#e65763',fillOpacity:.47,opacity:.8}:level==='yellow'?{...normalDistrict,color:'#b88a28',fillColor:'#f2bb42',fillOpacity:.41,opacity:.8}:normalDistrict;},smoothFactor:2.6,bubblingMouseEvents:false,
    onEachFeature:(f,layer)=>{
     raionPaths.set(f,layer);
-    layer.on('mouseover',()=>{layer._atlasHover=true;refreshDistrict(layer)});
-    layer.on('mouseout',()=>{layer._atlasHover=false;refreshDistrict(layer)});
-    layer.on('click',()=>chooseRaion(layer,true));
-    layer.bindTooltip(()=>featureName(f),{sticky:true,opacity:.98,direction:'top',className:'district-tooltip'});
+    layer.on('mouseover',()=>{window.ATLAS_HOVER_FEATURE=f;layer._atlasHover=true;refreshDistrict(layer)});
+    layer.on('mouseout',()=>{if(window.ATLAS_HOVER_FEATURE===f)window.ATLAS_HOVER_FEATURE=null;layer._atlasHover=false;refreshDistrict(layer)});
+    layer.on('click',e=>chooseRaion(layer,true,!!(e.originalEvent?.ctrlKey||e.originalEvent?.metaKey)));
+    layer.bindTooltip(()=>districtTooltip(f),{sticky:true,opacity:.98,direction:'top',className:'district-tooltip'});
    }
   });
   raionReady=true;dataFailed=false;showRaionLayer();updateStatus();listResults();
@@ -213,13 +239,14 @@ window.ATLAS_MAP_API={
  map,
  getDistricts:()=>raionFeatures,
  getSelected:()=>selectedLayer?.feature||null,
+ getSelectedFeatures:()=>[...selectedLayers].map(layer=>layer.feature),
  getKey:districtKey,
  getName:featureName,
  getRegion:featureRegion,
  getLanguage:()=>lang,
  repaint(feature){const layer=raionPaths.get(feature);refreshDistrict(layer);},
  repaintAll:refreshAllDistricts,
- focus(feature){const layer=raionPaths.get(feature);if(layer)chooseRaion(layer,true);}
+ focus(feature,additive=false){const layer=raionPaths.get(feature);if(layer)chooseRaion(layer,true,additive);}
 };
 
 $('focusUa').addEventListener('click',()=>setFocus('ua'));

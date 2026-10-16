@@ -1,4 +1,4 @@
-/* ATLAS UA 1.5 — a LOCAL fictional air-alert simulator.
+/* ATLAS UA 1.6 — a LOCAL fictional air-alert simulator.
    Never uses real alerts, real-time intelligence, or operational weapon data.
    All values are browser-local and not shared between visitors. */
 'use strict';
@@ -6,15 +6,15 @@
  const api=window.ATLAS_MAP_API;
  if(!api){console.error('ATLAS: map API missing');return;}
  const el=id=>document.getElementById(id);
- const STORE='atlas_ua_game_1_5';
+ const STORE='atlas_ua_game_1_5'; // Migration: keep the stage 1.5 key and saved levels
  const words={
   uk:{
    simEyebrow:'МОДУЛЬ 02 / СИМУЛЯЦІЯ',simHeading:'Центр тривог',simTag:'ЛОКАЛЬНО',
    simIntro:'Вигадана навчальна симуляція. Не показує реальних тривог.',redCounterLabel:'ЧЕРВОНИЙ',yellowCounterLabel:'ЖОВТИЙ',totalCounterLabel:'РАЙОНИ',
-   modeManual:'Ручний',modeAuto:'Авто',simTargetCaption:'ОБРАНИЙ РАЙОН',none:'Оберіть район на мапі або в пошуку',
+   modeManual:'Ручний',modeAuto:'Авто',simTargetCaption:'ОБРАНІ РАЙОНИ',none:'Оберіть район на мапі або в пошуку',
    labelLevelOff:'Зняти',labelLevelYellow:'Жовтий',labelLevelRed:'Червоний',simHint:'Виберіть район для керування тривогою.',
-   hintSelected:'Змініть навчальний рівень для вибраного району.',hintAuto:'Автоматичний ігровий сценарій активний. Для ручного керування оберіть «Ручний».',
-   simClockLabel:'ІГРОВИЙ ЧАС',simSpeedLabel:'Швидкість',simRandomLabel:'Випадковий район',simResetLabel:'Скинути',
+   hintSelected:'Ctrl + клік: вибрати кілька районів. Зміна застосовується до всіх.',hintAuto:'Автоматичний ігровий сценарій активний. Для ручного керування оберіть «Ручний».',
+   simClockLabel:'ІГРОВИЙ ЧАС',simSpeedLabel:'Швидкість · 1× = 3 хв / 1 реальна хв',simRandomLabel:'Випадковий район',simResetLabel:'Скинути',
    gameSearchLabel:'ШВИДКИЙ ПОШУК РАЙОНУ',gameSearchPlaceholder:'Назва району…',gameNoMatches:'Не знайдено',tabGame:'Симуляція',tabGeography:'Географія',simLogHeading:'ЖУРНАЛ ПОДІЙ',mapAlertLabel:'ІГРОВІ ТРИВОГИ',autoIndicator:'АВТО',manualIndicator:'РУЧНИЙ',
    simPause:'Пауза',simPlay:'Продовжити',simEmptyLog:'Поки немає подій. Оберіть район і змініть рівень.',
    confirmTitle:'Скинути симуляцію?',confirmDetail:'Усі навчальні тривоги, події та ігровий час будуть скинуті.',confirmCancel:'Скасувати',confirmAccept:'Скинути',
@@ -25,10 +25,10 @@
   ru:{
    simEyebrow:'МОДУЛЬ 02 / СИМУЛЯЦИЯ',simHeading:'Центр тревог',simTag:'ЛОКАЛЬНО',
    simIntro:'Вымышленная учебная симуляция. Не показывает реальные тревоги.',redCounterLabel:'КРАСНЫЙ',yellowCounterLabel:'ЖЁЛТЫЙ',totalCounterLabel:'РАЙОНЫ',
-   modeManual:'Ручной',modeAuto:'Авто',simTargetCaption:'ВЫБРАННЫЙ РАЙОН',none:'Выбери район на карте или в поиске',
+   modeManual:'Ручной',modeAuto:'Авто',simTargetCaption:'ВЫБРАННЫЕ РАЙОНЫ',none:'Выбери район на карте или в поиске',
    labelLevelOff:'Снять',labelLevelYellow:'Жёлтый',labelLevelRed:'Красный',simHint:'Выбери район для управления тревогой.',
-   hintSelected:'Измени учебный уровень для выбранного района.',hintAuto:'Запущен автоматический игровой сценарий. Для ручного управления выбери «Ручной».',
-   simClockLabel:'ИГРОВОЕ ВРЕМЯ',simSpeedLabel:'Скорость',simRandomLabel:'Случайный район',simResetLabel:'Сбросить',
+   hintSelected:'Ctrl + клик: выбери несколько районов. Уровень изменится для всех.',hintAuto:'Запущен автоматический игровой сценарий. Для ручного управления выбери «Ручной».',
+   simClockLabel:'ИГРОВОЕ ВРЕМЯ',simSpeedLabel:'Скорость · 1× = 3 мин / 1 реальная мин',simRandomLabel:'Случайный район',simResetLabel:'Сбросить',
    gameSearchLabel:'БЫСТРЫЙ ПОИСК РАЙОНА',gameSearchPlaceholder:'Название района…',gameNoMatches:'Не найдено',tabGame:'Симуляция',tabGeography:'География',simLogHeading:'ЖУРНАЛ СОБЫТИЙ',mapAlertLabel:'ИГРОВЫЕ ТРЕВОГИ',autoIndicator:'АВТО',manualIndicator:'РУЧНОЙ',
    simPause:'Пауза',simPlay:'Продолжить',simEmptyLog:'Пока нет событий. Выбери район и измени уровень.',
    confirmTitle:'Сбросить симуляцию?',confirmDetail:'Все учебные тревоги, события и игровое время будут сброшены.',confirmCancel:'Отмена',confirmAccept:'Сбросить',
@@ -37,33 +37,45 @@
    reset:'Симуляция сброшена',defaultRegion:'Украина',demo:'ДЕМО · НЕ РЕАЛЬНЫЕ ТРЕВОГИ'
   }
  };
- const state={levels:new Map(),mode:'manual',speed:1,paused:false,time:0,events:[],nextEvent:12,allFeatures:[]};
- let selected=null, language=api.getLanguage(), lastClock=-1, lastTick=performance.now();
+ const state={levels:new Map(),started:new Map(),mode:'manual',speed:1,paused:false,time:0,events:[],nextEvent:12,allFeatures:[]};
+ let selected=[], language=api.getLanguage(), lastClock=-1, lastTick=performance.now();
  function tr(){return words[language]||words.uk;}
  function formatTime(total){
   const s=Math.max(0,Math.floor(total));
   return [Math.floor(s/3600),Math.floor(s/60)%60,s%60].map(n=>String(n).padStart(2,'0')).join(':');
  }
  function getLevel(feature){return state.levels.get(api.getKey(feature))||'off';}
+ function getAlertInfo(feature){
+  const level=getLevel(feature),started=state.started.get(api.getKey(feature));
+  return {level,durationSeconds:level==='off'?0:Math.max(0,state.time-(started??state.time)),durationText:formatTime(level==='off'?0:Math.max(0,state.time-(started??state.time)))};
+ }
  function read(){
   try{
    const data=JSON.parse(localStorage.getItem(STORE)||'null');
-   if(!data||data.version!==1)return;
+   if(!data||![1,2].includes(data.version))return;
    if(Array.isArray(data.levels))for(const pair of data.levels){
     if(Array.isArray(pair)&&typeof pair[0]==='string'&&['red','yellow'].includes(pair[1])&&pair[0].length<250)state.levels.set(pair[0],pair[1]);
    }
+   if(data.version===2&&Array.isArray(data.started))for(const pair of data.started){if(Array.isArray(pair)&&typeof pair[0]==='string'&&Number.isFinite(pair[1]))state.started.set(pair[0],pair[1]);}
    if(data.mode==='auto'||data.mode==='manual')state.mode=data.mode;
    if([1,2,3,4,5].includes(data.speed))state.speed=data.speed;
    if(typeof data.paused==='boolean')state.paused=data.paused;
    if(Number.isFinite(data.time)&&data.time>=0&&data.time<100000000)state.time=data.time;
    if(Array.isArray(data.events))state.events=data.events.filter(e=>e&&typeof e==='object'&&Number.isFinite(e.time)).slice(-24);
+   // Stage 1.5 had no alarm-start timestamps; recover them from its log when possible.
+   for(const [key,level] of state.levels){
+    if(state.started.has(key))continue;
+    const name=key.split('|').slice(1).join('|');
+    const found=[...state.events].reverse().find(e=>e.type==='level'&&String(e.name||'').toLocaleLowerCase('uk')===name&&e.level===level);
+    state.started.set(key,found?found.time:state.time);
+   }
   }catch(e){console.warn('Local game save could not be restored',e);}
  }
  let saveTimer=0;
  function saveSoon(){
   clearTimeout(saveTimer);
   saveTimer=setTimeout(()=>{
-   try{localStorage.setItem(STORE,JSON.stringify({version:1,levels:[...state.levels],mode:state.mode,speed:state.speed,paused:state.paused,time:state.time,events:state.events.slice(-24)}));}
+   try{localStorage.setItem(STORE,JSON.stringify({version:2,levels:[...state.levels],started:[...state.started],mode:state.mode,speed:state.speed,paused:state.paused,time:state.time,events:state.events.slice(-24)}));}
    catch(e){console.warn('Local storage unavailable',e);}
   },250);
  }
@@ -74,6 +86,7 @@
  }
  function eventCaption(e){
   const t=tr();
+  if(e.type==='levelBulk')return `${e.count} ${language==='uk'?'районів':'районов'} · ${t['level'+(e.level==='red'?'Red':e.level==='yellow'?'Yellow':'Off')]}`;
   if(e.type==='level')return `${e.name||'—'} · ${t['level'+(e.level==='red'?'Red':e.level==='yellow'?'Yellow':'Off')]} (${e.origin==='auto'?t.reasonAuto:t.reasonManual})`;
   return t[e.type]||'';
  }
@@ -99,7 +112,7 @@
    const name=document.createElement('strong');name.textContent=api.getName(feature);
    const region=document.createElement('small');region.textContent=api.getRegion(feature);
    button.append(name,region);
-   button.addEventListener('click',()=>{input.value='';renderHits();api.focus(feature);});
+   button.addEventListener('click',e=>{input.value='';renderHits();api.focus(feature,e.ctrlKey||e.metaKey);});
    view.append(button);
   }
  }
@@ -123,14 +136,13 @@
   el('mapAutoIndicator').classList.toggle('auto',state.mode==='auto');
  }
  function renderTarget(){
-  const t=tr(),disabled=!selected||state.mode==='auto';
-  el('simTargetName').textContent=selected?api.getName(selected):t.none;
-  el('simTargetRegion').textContent=selected?api.getRegion(selected):'';
-  el('simHint').textContent=state.mode==='auto'?t.hintAuto:selected?t.hintSelected:t.simHint;
-  const level=selected?getLevel(selected):'off';
+  const t=tr(),disabled=!selected.length||state.mode==='auto';
+  el('simTargetName').textContent=!selected.length?t.none:selected.length===1?api.getName(selected[0]):(language==='uk'?`Вибрано ${selected.length} районів`:`Выбрано районов: ${selected.length}`);
+  el('simTargetRegion').textContent=selected.length===1?api.getRegion(selected[0]):selected.length?(language==='uk'?'Спільне керування · Ctrl + клік':'Общее управление · Ctrl + клик'):'';
+  el('simHint').textContent=state.mode==='auto'?t.hintAuto:selected.length?t.hintSelected:t.simHint;
   for(const key of ['Off','Yellow','Red']){
    const button=el('level'+key);button.disabled=disabled;
-   const current=selected&&level===key.toLowerCase();
+   const current=selected.length&&selected.every(f=>getLevel(f)===key.toLowerCase());
    button.classList.toggle('current',!!current);
    button.setAttribute('aria-pressed',String(!!current));
   }
@@ -156,19 +168,24 @@
   renderHits();
   renderMode();renderEvents();
  }
- function alertSet(feature,level,origin='manual'){
-  if(!feature||!['off','yellow','red'].includes(level))return;
-  const key=api.getKey(feature),old=getLevel(feature);
-  if(level===old)return;
-  if(level==='off')state.levels.delete(key);else state.levels.set(key,level);
-  api.repaint(feature);
-  renderCounts();renderTarget();
-  log({type:'level',level,name:api.getName(feature),region:api.getRegion(feature),origin});
-  window.dispatchEvent(new CustomEvent('atlas:alerts-changed'));
+ function alertSetMany(features,level,origin='manual'){
+  if(!features.length||!['off','yellow','red'].includes(level))return;
+  let changed=0;
+  for(const feature of features){
+   const key=api.getKey(feature),old=getLevel(feature);if(level===old)continue;
+   if(level==='off'){state.levels.delete(key);state.started.delete(key);}
+   else {state.levels.set(key,level);state.started.set(key,state.time);}
+   api.repaint(feature);changed++;
+   if(features.length===1)log({type:'level',level,name:api.getName(feature),region:api.getRegion(feature),origin});
+  }
+  if(!changed)return;
+  if(features.length!==1)log({type:'levelBulk',level,count:changed,origin});
+  renderCounts();renderTarget();window.dispatchEvent(new CustomEvent('atlas:alerts-changed'));
  }
+ function alertSet(feature,level,origin='manual'){if(feature)alertSetMany([feature],level,origin);}
  function setMode(mode){
   if(!['manual','auto'].includes(mode)||state.mode===mode)return;
-  state.mode=mode;state.nextEvent=state.time+5;
+  state.mode=mode;state.nextEvent=state.time+15;
   renderMode();log({type:mode==='auto'?'modeSetAuto':'modeSetManual'});
  }
  function runAutoEvent(){
@@ -184,16 +201,16 @@
  function tick(){
   const now=performance.now();const delta=Math.min(2,Math.max(0,(now-lastTick)/1000));lastTick=now;
   if(state.paused)return;
-  state.time+=delta*state.speed;
+  state.time+=delta*3*state.speed;
   if(Math.floor(state.time)!==lastClock){lastClock=Math.floor(state.time);el('simClock').textContent=formatTime(state.time);saveSoon();}
   if(state.mode==='auto'&&state.time>=state.nextEvent){
-   runAutoEvent();state.nextEvent=state.time+8+Math.random()*10;
+   runAutoEvent();state.nextEvent=state.time+30+Math.random()*32;
   }
  }
  function reset(){
-  state.levels.clear();state.mode='manual';state.speed=1;state.paused=false;
-  state.time=0;state.nextEvent=12;state.events=[];lastTick=performance.now();lastClock=-1;
-  api.repaintAll();window.dispatchEvent(new CustomEvent('atlas:alerts-changed'));
+  state.levels.clear();state.started.clear();state.mode='manual';state.speed=1;state.paused=false;
+  state.time=0;state.nextEvent=36;state.events=[];lastTick=performance.now();lastClock=-1;
+  api.repaintAll();window.dispatchEvent(new CustomEvent('atlas:alerts-changed'));window.dispatchEvent(new CustomEvent('atlas:game-reset'));
   renderMode();el('simClock').textContent='00:00:00';log({type:'reset'});
  }
  function randomDistrict(){
@@ -201,14 +218,14 @@
   api.focus(state.allFeatures[Math.floor(Math.random()*state.allFeatures.length)]);
  }
  read();
- window.ATLAS_GAME={getLevel};
+ window.ATLAS_GAME={getLevel,getAlertInfo,getTime:()=>state.time,getSpeed:()=>state.speed,isPaused:()=>state.paused};
  // Important: the basemap and all existing geography controls stay untouched.
- window.addEventListener('atlas:select',e=>{selected=e.detail?.feature||null;renderTarget();});
+ window.addEventListener('atlas:select',e=>{selected=e.detail?.features||[];renderTarget();});
  window.addEventListener('atlas:districts-ready',e=>{
   state.allFeatures=e.detail.features||[];
   // Remove saved entries from obsolete datasets to keep stats accurate.
   const valid=new Set(state.allFeatures.map(api.getKey));
-  for(const key of state.levels.keys())if(!valid.has(key))state.levels.delete(key);
+  for(const key of state.levels.keys())if(!valid.has(key)){state.levels.delete(key);state.started.delete(key);}
   renderCounts();renderTarget();renderHits();saveSoon();
  });
  window.addEventListener('atlas:language',e=>{language=e.detail?.lang||api.getLanguage();renderLanguage();});
@@ -218,7 +235,7 @@
  el('modeManual').addEventListener('click',()=>setMode('manual'));
  el('modeAuto').addEventListener('click',()=>setMode('auto'));
  for(const level of ['Off','Yellow','Red'])el('level'+level).addEventListener('click',()=>{
-  if(state.mode==='manual'&&selected)alertSet(selected,level.toLowerCase());
+  if(state.mode==='manual'&&selected.length)alertSetMany(selected,level.toLowerCase());
  });
  el('pauseSimulation').addEventListener('click',()=>{
   state.paused=!state.paused;lastTick=performance.now();renderMode();log({type:state.paused?'pause':'resume'});
@@ -233,16 +250,27 @@
  el('simConfirm').addEventListener('close',()=>{if(el('simConfirm').returnValue==='reset')reset();});
  document.addEventListener('keydown',e=>{
   if(e.altKey||e.ctrlKey||e.metaKey||e.target.closest('input,textarea,select,dialog'))return;
-  if(state.mode!=='manual'||!selected)return;
+  if(state.mode!=='manual'||!selected.length)return;
   const wanted={'0':'off','1':'yellow','2':'red'}[e.key];
-  if(wanted)alertSet(selected,wanted,'manual');
+  if(wanted)alertSetMany(selected,wanted,'manual');
  });
  el('simClock').textContent=formatTime(state.time);
  language=api.getLanguage();renderLanguage();
- state.nextEvent=state.time+8;
+ state.nextEvent=state.time+30;
  setInterval(tick,250);
+ setInterval(()=>{
+  const tip=document.querySelector('.leaflet-tooltip.district-tooltip');
+  const feature=window.ATLAS_HOVER_FEATURE;
+  if(!tip||!feature)return;
+  const info=getAlertInfo(feature),status=tip.querySelector('.district-tip-status'),duration=tip.querySelector('.district-tip-duration');
+  if(status){
+   status.className='district-tip-status tip-'+info.level;
+   status.textContent=language==='uk'?(info.level==='red'?'● Червона тривога':info.level==='yellow'?'● Жовта тривога':'● Тривоги немає'):(info.level==='red'?'● Красная тревога':info.level==='yellow'?'● Жёлтая тревога':'● Тревоги нет');
+  }
+  if(duration)duration.textContent=(language==='uk'?'Час тривоги: ':'Время тревоги: ')+(info.level==='off'?'—':info.durationText);
+ },1000);
  window.addEventListener('pagehide',()=>{
   clearTimeout(saveTimer);
-  try{localStorage.setItem(STORE,JSON.stringify({version:1,levels:[...state.levels],mode:state.mode,speed:state.speed,paused:state.paused,time:state.time,events:state.events.slice(-24)}));}catch(_){/* storage optional */}
+  try{localStorage.setItem(STORE,JSON.stringify({version:2,levels:[...state.levels],started:[...state.started],mode:state.mode,speed:state.speed,paused:state.paused,time:state.time,events:state.events.slice(-24)}));}catch(_){/* storage optional */}
  });
 })();
