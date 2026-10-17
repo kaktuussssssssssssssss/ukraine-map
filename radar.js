@@ -1,132 +1,192 @@
-/* ATLAS UA 1.8 — fictional radar anchored to a map latitude/longitude.
-   No real radar data, weapons specifications or strike planning. */
+/* ATLAS UA 1.9 · Fictional cartographic scanner and visual object studio.
+   Coordinates of the scanner are arbitrary. Icons and drift are decorative;
+   no real detection / targeting / flight planning is calculated. */
 'use strict';
 (() => {
- const api=window.ATLAS_MAP_API,game=window.ATLAS_GAME;
+ const api=window.ATLAS_MAP_API, game=window.ATLAS_GAME;
  const cvs=document.getElementById('radarOverlay');
- if(!cvs||!api||!game)return;
+ if(!api||!game||!cvs||!window.L)return;
+ const map=api.map, el=id=>document.getElementById(id);
  const ctx=cvs.getContext('2d',{alpha:true});if(!ctx)return;
- const map=api.map;const el=id=>document.getElementById(id);
- const TWO=Math.PI*2,PERIOD=12; // 12 game seconds == 4 actual seconds at 1×
- // A stable, arbitrary *fictional* center in Ukraine. Not the location of a real radar.
- // It is stored as a LatLng, NEVER derived from the viewport/screen center.
- const ORIGIN=Object.freeze({lat:49.17,lng:31.31});
- function originPoint(){return map.latLngToContainerPoint(L.latLng(ORIGIN.lat,ORIGIN.lng));}
- const types=[
-  {symbol:'◇',kind:'probe',color:'#3adcb0',uk:'Навчальний БПЛА',ru:'Учебный БПЛА'},
-  {symbol:'▲',kind:'fast',color:'#f2cb77',uk:'Швидка мітка',ru:'Быстрая отметка'},
-  {symbol:'◆',kind:'unknown',color:'#8dbfea',uk:'Невідома мітка',ru:'Неизвестная отметка'}
+ const TAU=Math.PI*2,PERIOD=12,MAX_OBJECTS=16;
+ const ORIGIN=L.latLng(49.17,31.31); // Arbitrary fictional location, not a real radar.
+ const kinds=[
+  {id:'delta',uk:'Герань-2 · умовна',ru:'Герань-2 · условная',color:'#56ead0',shape:'<path d="M12 2 22 18l-10-5L2 18Z"/><path d="M12 3v17" fill="none" stroke="currentColor" stroke-width="1.35"/>'},
+  {id:'jet',uk:'Герань-3 / 4 · умовна',ru:'Герань-3 / 4 · условная',color:'#f8bc72',shape:'<path d="M12 1 16 11 22 16 22 19 13.5 16 13.5 21 16 23 8 23 10.5 21 10.5 16 2 19 2 16 8 11Z"/><path d="M9 23h6" stroke="#ff965e" stroke-width="2"/>'},
+  {id:'rocket',uk:'Герань-5 · умовна',ru:'Герань-5 · условная',color:'#ed9bc6',shape:'<path d="M12 1q6 4 5 13l4 5v3l-8-4h-2l-8 4v-3l4-5Q6 5 12 1Z"/><path d="M12 8v11" fill="none" stroke="currentColor" stroke-width="1.2"/>'},
+  {id:'wing',uk:'Бандероль · умовна',ru:'Бандероль · условная',color:'#adc6ff',shape:'<path d="M12 2 15 12 23 15v3l-9-2-2 7-2-7-9 2v-3l8-3Z"/><path d="M12 4v15" fill="none" stroke="currentColor" stroke-width="1"/>'},
+  {id:'cruise',uk:'Крилата мітка',ru:'Крылатая отметка',color:'#c0f0a5',shape:'<path d="M12 1 15 9 22 14 22 17 14 14l-2 8-2-8-8 3v-3l7-5Z"/>'},
+  {id:'quad',uk:'Малий квадрокоптер',ru:'Малый квадрокоптер',color:'#c2d6e6',shape:'<rect x="10" y="10" width="4" height="4" rx="1"/><path d="M8 8 5 5m11 3 3-3M8 16l-3 3m11-3 3 3" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="4" cy="4" r="3"/><circle cx="20" cy="4" r="3"/><circle cx="4" cy="20" r="3"/><circle cx="20" cy="20" r="3"/>'},
+  {id:'unknown',uk:'Невідома мітка',ru:'Неизвестная отметка',color:'#f1ce70',shape:'<path d="M9 9q0-4 4-4t4 4q0 3-4 5v2" stroke="currentColor" stroke-width="3" fill="none"/><circle cx="13" cy="20" r="1.7"/>'}
  ];
- const items=[],seen=new Map();let nextId=1,viewW=0,viewH=0,dpi=1,lastAngle=null,lastTime=game.getTime(),lastFrame=0;
- let enabled=true;let smoothTime=game.getTime(),lastAnimationMs=null;
- const language=()=>api.getLanguage()==='uk'?'uk':'ru';
+ const shapes=new Map();
+ for(const kind of kinds){
+  const src=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${kind.color}" stroke="${kind.color}" stroke-width=".4" stroke-linejoin="round">${kind.shape}</svg>`;
+  const img=new Image();img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(src);shapes.set(kind.id,img);
+ }
+ const items=[],snapshots=new Map();let seq=1,selectedKind='delta',armed=false,enabled=true;
+ let width=1,height=1,dpr=1,lastTime=game.getTime(),lastAngle=null,smoothTime=game.getTime(),lastAnim=null,lastPaint=0,lastVisualSpeed=0,lastPaused=null;
+ const lang=()=>api.getLanguage()==='uk'?'uk':'ru';
+ const text=(uk,ru)=>lang()==='uk'?uk:ru;
+ function iconMarkup(kind){return `<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" stroke="currentColor" stroke-width=".4">${kind.shape}</svg>`;}
+ const machineHTML=`<div class="scanner-machine" aria-label="Навчальна радарна машина">
+  <span class="scanner-machine-pulse"></span>
+  <svg viewBox="0 0 90 90" role="img" aria-hidden="true">
+   <ellipse cx="45" cy="73" rx="29" ry="7" fill="#001b21" opacity=".5"/>
+   <rect x="15" y="35" width="61" height="33" rx="7" fill="#101c25" stroke="#154e54" stroke-width="2"/>
+   <path d="M25 41h41v24H25z" fill="#49666b" stroke="#98b4a0" stroke-width="1.4"/>
+   <path d="M30 42h31v21H30z" fill="#203b37"/><rect x="25" y="27" width="41" height="12" rx="3" fill="#63857b" stroke="#c8e4c0" stroke-width="1.3"/>
+   <rect x="20" y="26" width="7" height="13" rx="2" fill="#1a2b34"/><rect x="64" y="26" width="7" height="13" rx="2" fill="#1a2b34"/>
+   <rect x="20" y="64" width="9" height="10" rx="2" fill="#0a1219"/><rect x="62" y="64" width="9" height="10" rx="2" fill="#0a1219"/>
+   <rect x="38" y="42" width="15" height="19" rx="3" fill="#172b32" stroke="#81bdb2"/>
+   <g class="scanner-dish"><path d="M43 44V21" stroke="#a6e9c8" stroke-width="2.8"/><path d="M24 20q20-17 41 0l-21 13Z" fill="#90c6ac" stroke="#19493c" stroke-width="2"/><path d="M30 20h31" stroke="#c4f3d3" stroke-width="2"/><circle cx="44" cy="33" r="3" fill="#6bf1bb"/></g>
+   <circle cx="45" cy="51" r="2" fill="#64ecba"/>
+  </svg><span class="scanner-machine-label">RLS · DEMO</span></div>`;
+ const machine=L.marker(ORIGIN,{icon:L.divIcon({className:'scanner-leaflet-icon',html:machineHTML,iconSize:[90,90],iconAnchor:[45,53]}),keyboard:false,zIndexOffset:1900,interactive:true}).addTo(map);
+ machine.bindTooltip(text('Навчальна радарна машина · вигадана позиція','Учебная радарная машина · вымышленная позиция'),{direction:'top',offset:[0,-29],className:'district-tooltip'});
  function resize(){
-  const bounds=el('mapWrap').getBoundingClientRect();
-  viewW=Math.max(1,Math.round(bounds.width));viewH=Math.max(1,Math.round(bounds.height));
-  dpi=Math.min(1.5,window.devicePixelRatio||1);
-  cvs.width=Math.round(viewW*dpi);cvs.height=Math.round(viewH*dpi);
-  cvs.style.width=viewW+'px';cvs.style.height=viewH+'px';
-  ctx.setTransform(dpi,0,0,dpi,0,0);
+  const rect=el('mapWrap').getBoundingClientRect();width=Math.max(1,Math.floor(rect.width));height=Math.max(1,Math.floor(rect.height));
+  dpr=Math.min(1.25,window.devicePixelRatio||1);cvs.width=Math.round(width*dpr);cvs.height=Math.round(height*dpr);
+  cvs.style.width=width+'px';cvs.style.height=height+'px';ctx.setTransform(dpr,0,0,dpr,0,0);
  }
- function pickedCenter(){return api.getSelectedCenter?.()||map.getCenter();}
- function spawn(){
-  if(items.length>=24)return;
-  const pos=pickedCenter(),id=nextId++;
-  // Slight, purely visual fictional drift — no destinations or geographic flight routing.
-  const item={id,base:L.latLng(pos.lat,pos.lng),birth:smoothTime,type:types[(id-1)%types.length],offset:Math.PI*id*.7};
-  items.push(item);el('radarObjectCount').textContent=String(items.length);
-  seen.delete(id); // invisible until the sweep actually reaches it
+ function center(){return map.latLngToContainerPoint(ORIGIN);}
+ function radius(){return Math.min(660,Math.max(115,205*Math.pow(1.6,map.getZoom()-6)));}
+ function objectCoordinates(item,t){
+  // Decorative tiny oscillation around its own original marker, never point-to-point routing.
+  const dt=Math.max(0,t-item.birth)/48;
+  return L.latLng(item.base.lat+Math.sin(dt*.72+item.seed)*.036,item.base.lng+Math.cos(dt*.54+item.seed)*.045);
  }
- function clear(){items.length=0;seen.clear();el('radarObjectCount').textContent='0';}
- function coords(item,t){
-  const dt=Math.max(0,t-item.birth)/55;
-  // Small stationary-ish loops: purely aesthetic, not an actual weapons trajectory.
-  return L.latLng(item.base.lat+Math.sin(dt*.7+item.offset)*.08,item.base.lng+Math.cos(dt*.8+item.offset)*.12);
+ function angleCrossed(prev,now,a,travel){return travel>=TAU || ((a-prev+TAU)%TAU) <= Math.max(.00001,travel);}
+ function createItem(at){
+  if(items.length>=MAX_OBJECTS){el('objectHelp').textContent=text('Ліміт — 16 навчальних об’єктів.','Лимит — 16 учебных объектов.');return;}
+  const kind=kinds.find(k=>k.id===selectedKind)||kinds[0];const id=seq++;
+  const point=at||api.getSelectedCenter?.()||map.getCenter();
+  items.push({id,kind,base:L.latLng(point.lat,point.lng),birth:smoothTime,seed:id*1.11});
+  renderStudio();lastAngle=null;
  }
- function sweepCrossed(prev,now,a){return ((a-prev+TWO)%TWO)<=((now-prev+TWO)%TWO);}
- function drawMarker(point,item,opacity){
-  const x=point.x,y=point.y;if(x<0||y<0||x>viewW||y>viewH)return;
-  ctx.save();ctx.globalAlpha=opacity;
-  ctx.shadowBlur=11;ctx.shadowColor=item.type.color;
-  ctx.strokeStyle=item.type.color;ctx.lineWidth=1.5;
-  ctx.beginPath();ctx.arc(x,y,10,0,TWO);ctx.stroke();
-  ctx.fillStyle='#092c2a';ctx.beginPath();ctx.arc(x,y,8,0,TWO);ctx.fill();
-  ctx.shadowBlur=0;ctx.fillStyle=item.type.color;
-  ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(item.type.symbol,x,y+.3);
-  ctx.textAlign='left';ctx.fillStyle='#d4f6ee';ctx.font='700 10px system-ui';
-  const text=(language()==='uk'?'МІТКА ':'МЕТКА ')+String(item.id).padStart(2,'0');
-  ctx.fillText(text,x+14,y+3);
-  ctx.restore();
+ function clear(){items.length=0;snapshots.clear();armed=false;syncArmed();renderStudio();}
+ function syncArmed(){
+  el('radarPlace').classList.toggle('is-armed',armed);
+  el('radarPlace').setAttribute('aria-pressed',String(armed));
+  el('mapWrap').classList.toggle('radar-placement',armed);
+  el('objectHelp').textContent=armed?text('Клікни на мапі, щоб поставити навчальну позначку. Esc — скасувати.','Кликни на карте для учебной отметки. Esc — отмена.')
+  :text('Позначки мають вигадані параметри та не розраховують маршрути.','У отметок вымышленные параметры, маршруты не рассчитываются.');
  }
- function render(now=smoothTime){
-  if(!viewW||!viewH)return;
-  ctx.clearRect(0,0,viewW,viewH);if(!enabled)return;
-  const angle=(now/PERIOD*TWO)%TWO;
-  // Geographically anchored pivot: follows the map's pan and zoom projection.
-  // The viewport may move independently, but the geographic origin stays fixed.
-  const pivot=originPoint(),cx=pivot.x,cy=pivot.y;
-  const far=Math.min(100000,Math.hypot(Math.max(Math.abs(cx),Math.abs(cx-viewW)),Math.max(Math.abs(cy),Math.abs(cy-viewH)))+80);
-  // Minimal line avoids full-screen tint and expensive giant glow.
-
-  ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);
-  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(far,0);
-  ctx.strokeStyle='rgba(69,240,148,.82)';ctx.lineWidth=1.4;ctx.shadowColor='#46eaa0';ctx.shadowBlur=5;ctx.stroke();ctx.restore();
-  // A tiny unobtrusive geographic pivot, visible only while it is on-screen.
-  if(cx>=0&&cy>=0&&cx<=viewW&&cy<=viewH){
-   ctx.save();ctx.strokeStyle='rgba(61,231,159,.7)';ctx.lineWidth=1;
-   ctx.beginPath();ctx.arc(cx,cy,4,0,TWO);ctx.stroke();ctx.restore();
+ function makeIcon(){
+  const select=el('radarKind');select.replaceChildren();
+  for(const kind of kinds){const opt=document.createElement('option');opt.value=kind.id;opt.textContent=kind[lang()];select.add(opt);}
+  select.value=selectedKind;
+  const preview=el('radarKindIcon'),kind=kinds.find(k=>k.id===selectedKind)||kinds[0];
+  preview.innerHTML=iconMarkup(kind);preview.style.color=kind.color;
+ }
+ function renderStudio(){
+  el('radarObjectCount').textContent=String(items.length);
+  const list=el('radarObjectList');list.replaceChildren();
+  if(!items.length){const empty=document.createElement('li');empty.className='object-empty';empty.textContent=text('Ще немає навчальних позначок.','Пока нет учебных отметок.');list.append(empty);return;}
+  for(const item of items.slice().reverse()){
+   const li=document.createElement('li'),target=document.createElement('button'),remove=document.createElement('button');
+   li.className='object-row';target.type='button';target.className='object-focus';
+   const glyph=document.createElement('span');glyph.className='object-glyph';glyph.style.color=item.kind.color;glyph.innerHTML=iconMarkup(item.kind);
+   const label=document.createElement('span');label.textContent=item.kind[lang()]+' · '+String(item.id).padStart(2,'0');
+   target.append(glyph,label);target.title=text('Знайти на мапі','Показать на карте');
+   target.addEventListener('click',()=>map.flyTo(item.base,Math.max(map.getZoom(),7),{duration:.55}));
+   remove.type='button';remove.className='object-delete';remove.textContent='×';remove.title=text('Прибрати позначку','Удалить отметку');
+   remove.setAttribute('aria-label',remove.title);
+   remove.addEventListener('click',()=>{const i=items.findIndex(x=>x.id===item.id);if(i!==-1){items.splice(i,1);snapshots.delete(item.id);renderStudio();}});
+   li.append(target,remove);list.append(li);
   }
-  // Continuous real positions remain hidden; only a discrete, fading snapshot is drawn.
-  if(lastAngle!==null&&!game.isPaused()&&now>=lastTime){
-   const travel=(now-lastTime)/PERIOD*TWO;
-   if(travel>0&&travel<=TWO*1.2){
-    for(const item of items){
-     const ll=coords(item,now),p=map.latLngToContainerPoint(ll);
-     if(p.x<0||p.y<0||p.x>viewW||p.y>viewH)continue;
-     const direction=(Math.atan2(p.y-cy,p.x-cx)+TWO)%TWO;
-     if(travel>=TWO||sweepCrossed(lastAngle,angle,direction))seen.set(item.id,{latlng:ll,at:now});
-    }
+ }
+ function drawSweep(now,pivot,R){
+  const cx=pivot.x,cy=pivot.y,angle=(now/PERIOD*TAU)%TAU;
+  if(cx+R<0||cy+R<0||cx-R>width||cy-R>height)return angle;
+  ctx.save();
+  // Rings mark purely decorative scan coverage. No real range or sensitivity.
+  ctx.setLineDash([3,7]);
+  for(const fraction of [.5,1]){ctx.strokeStyle=`rgba(56,203,144,${fraction===1?.21:.12})`;ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,cy,R*fraction,0,TAU);ctx.stroke();}
+  ctx.setLineDash([]);
+  // Short fading wedge behind a crisp and narrower scanning line.
+  ctx.translate(cx,cy);ctx.rotate(angle);
+  const gradient=ctx.createRadialGradient(0,0,15,0,0,R);gradient.addColorStop(0,'rgba(50,250,161,.015)');gradient.addColorStop(.5,'rgba(50,250,161,.12)');gradient.addColorStop(1,'rgba(50,250,161,0)');
+  ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,R,-.31,0);ctx.closePath();ctx.fillStyle=gradient;ctx.fill();
+  ctx.beginPath();ctx.moveTo(14,0);ctx.lineTo(R,0);ctx.lineWidth=1.7;ctx.strokeStyle='rgba(92,255,180,.82)';ctx.stroke();
+  ctx.beginPath();ctx.moveTo(14,0);ctx.lineTo(R*.58,0);ctx.lineWidth=3.4;ctx.strokeStyle='rgba(90,255,167,.10)';ctx.stroke();ctx.restore();
+  return angle;
+ }
+ function drawContact(position,item,opacity){
+  const x=position.x,y=position.y;if(x<0||y<0||x>width||y>height)return;
+  ctx.save();ctx.globalAlpha=opacity;ctx.lineWidth=1.2;ctx.strokeStyle=item.kind.color;ctx.fillStyle='#091c28';
+  ctx.beginPath();ctx.arc(x,y,13,0,TAU);ctx.fill();ctx.stroke();
+  const img=shapes.get(item.kind.id);
+  if(img?.complete&&img.naturalWidth)ctx.drawImage(img,x-10,y-10,20,20);
+  else{ctx.fillStyle=item.kind.color;ctx.fillRect(x-2,y-2,4,4);}
+  ctx.font='700 10px system-ui';ctx.fillStyle='#e0fcf4';ctx.textBaseline='middle';ctx.fillText('#'+String(item.id).padStart(2,'0'),x+17,y+1);ctx.restore();
+ }
+ function render(t=smoothTime){
+  ctx.clearRect(0,0,width,height);if(!enabled)return;
+  const pivot=center(),R=radius(),angle=drawSweep(t,pivot,R);
+  const travel=lastAngle===null?0:(t-lastTime)/PERIOD*TAU;
+  if(lastAngle!==null&&!game.isPaused()&&t>=lastTime){
+   for(const item of items){
+    const ll=objectCoordinates(item,t),p=map.latLngToContainerPoint(ll);
+    if(Math.hypot(p.x-pivot.x,p.y-pivot.y)>R)continue;
+    const dir=(Math.atan2(p.y-pivot.y,p.x-pivot.x)+TAU)%TAU;
+    if(angleCrossed(lastAngle,angle,dir,travel)&&travel>0)snapshots.set(item.id,{at:t,latlng:ll});
    }
   }
-  lastAngle=angle;lastTime=now;
-  for(const item of items){
-   const snap=seen.get(item.id);if(!snap)continue;
-   const age=now-snap.at,alpha=Math.max(0,1-age/23);
-   if(alpha<=0){seen.delete(item.id);continue;}
-   drawMarker(map.latLngToContainerPoint(snap.latlng),item,Math.max(.05,alpha));
+  lastAngle=angle;lastTime=t;
+  for(const item of items){const snap=snapshots.get(item.id);if(!snap)continue;
+   const age=t-snap.at,alpha=Math.max(0,1-age/38);if(alpha<=0){snapshots.delete(item.id);continue;}
+   drawContact(map.latLngToContainerPoint(snap.latlng),item,alpha);
   }
  }
- function animation(ms){
-  requestAnimationFrame(animation);
-  if(lastAnimationMs===null){lastAnimationMs=ms;return;}
-  const dt=Math.min(.12,Math.max(0,(ms-lastAnimationMs)/1000));lastAnimationMs=ms;
+ function animate(ms){
+  requestAnimationFrame(animate);
+  if(lastAnim===null){lastAnim=ms;return;}
+  const dt=Math.min(.12,Math.max(0,(ms-lastAnim)/1000));lastAnim=ms;
   if(!game.isPaused())smoothTime+=dt*3*game.getSpeed();
-  if(document.hidden){lastAngle=null;return;}
-  if(ms-lastFrame<33)return; // smooth 30fps overlay, independent of map vector layers
-  lastFrame=ms;render(smoothTime);
+  if(document.hidden)return;
+  if(game.getSpeed()!==lastVisualSpeed||game.isPaused()!==lastPaused){
+   const machineNode=machine.getElement();
+   if(machineNode){machineNode.style.setProperty('--sweep-period', (4/game.getSpeed())+'s');machineNode.classList.toggle('is-paused',game.isPaused());}
+   lastVisualSpeed=game.getSpeed();lastPaused=game.isPaused();
+  }
+  if(ms-lastPaint<42)return;lastPaint=ms;render(smoothTime);
  }
  function updateLanguage(){
-  const uk=language()==='uk';
   const copy={
-   radarHeading:uk?'РАДАР · ГЕОПРИВ’ЯЗКА':'РАДАР · ГЕОПРИВЯЗКА',radarBadge:uk?'МОДУЛЬ 03':'МОДУЛЬ 03',
-   radarTargetsLabel:uk?'УМОВНІ ЦІЛІ':'УСЛОВНЫЕ ЦЕЛИ',radarVisibleLabel:uk?'Видно після сканування':'Видны после сканирования',
-   radarSpinLabel:uk?'ЦЕНТР У КООРДИНАТАХ МАПИ · 4 С / 1×':'ЦЕНТР В КООРДИНАТАХ КАРТЫ · 4 С / 1×',
-   radarSweepLabel:uk?'Мітки з’являються після проходу променя та згасають.':'Метки появляются после прохода луча и затухают.',
-   radarSpawnLabel:uk?'Додати навчальну мітку':'Добавить учебную отметку',radarClearLabel:uk?'Очистити':'Очистить',
-   radarShowMapLabel:uk?'Показати геоприв’язаний радар':'Показать геопривязанный радар',
-   radarNote:uk?'Вигадані навчальні цілі. Не відображає реальні дрони та ракети.':'Вымышленные учебные цели. Не показывает реальные дроны и ракеты.',
-   radarMapCaption:uk?'● РАДАР · ЦЕНТР УКРАЇНИ':'● РАДАР · ЦЕНТР УКРАИНЫ'
+   radarHeading:text('РАДАРНА МАШИНА','РАДАРНАЯ МАШИНА'),radarBadge:'МОДУЛЬ 03',
+   radarSpinLabel:text('ГЕОПРИВ’ЯЗКА · 4 С / 1×','ГЕОПРИВЯЗКА · 4 С / 1×'),
+   radarSweepLabel:text('Промінь обертається від машини. Мітки оновлюються після сканування.','Луч вращается от машины. Отметки обновляются после сканирования.'),
+   radarTargetsLabel:text('НАВЧАЛЬНІ МІТКИ','УЧЕБНЫЕ МЕТКИ'),
+   radarVisibleLabel:text('Видно після сканування','Видны после сканирования'),
+   radarSpawnLabel:text('Додати біля вибраного району','Добавить возле района'),radarClearLabel:text('Очистити','Очистить'),
+   radarShowMapLabel:text('Показувати сканер на мапі','Показывать сканер на карте'),
+   radarNote:text('Вигадана машина та умовні моделі. Це не справжня РЛС і не реальні маршрути.','Вымышленная машина и условные модели. Это не настоящая РЛС и не реальные маршруты.'),
+   radarMapCaption:text('◉ НАВЧАЛЬНИЙ РАДАР','◉ УЧЕБНЫЙ РАДАР'),
+   radarStudioTitle:text('РЕДАКТОР ОБ’ЄКТІВ','РЕДАКТОР ОБЪЕКТОВ'),
+   radarKindLabel:text('ТИП ПОЗНАЧКИ','ТИП МЕТКИ'),radarPlaceLabel:text('Поставити на мапі','Разместить на карте'),
+   radarLocateLabel:text('Знайти радарну машину','Найти радарную машину'),
+   radarListTitle:text('СТВОРЕНІ ОБ’ЄКТИ','СОЗДАННЫЕ ОБЪЕКТЫ'),
+   radarObjectHint:text('Різні силуети, без розрахунку бойових параметрів.','Разные силуэты, без расчёта боевых параметров.')
   };
-  for(const [id,value] of Object.entries(copy))if(el(id))el(id).textContent=value;
+  for(const [id,v] of Object.entries(copy))if(el(id))el(id).textContent=v;
+  machine.setTooltipContent(text('Навчальна радарна машина · вигадана позиція','Учебная радарная машина · вымышленная позиция'));
+  makeIcon();syncArmed();renderStudio();
  }
- el('radarSpawn').addEventListener('click',spawn);
+ el('radarKind').addEventListener('change',e=>{selectedKind=e.target.value;makeIcon();});
+ el('radarSpawn').addEventListener('click',()=>createItem());
+ el('radarPlace').addEventListener('click',()=>{armed=!armed;syncArmed();if(armed&&window.innerWidth<800){el('app').classList.remove('menu-open');}});
+ map.on('click',e=>{if(!armed)return;armed=false;syncArmed();createItem(e.latlng);});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&armed){armed=false;syncArmed();}});
  el('radarClear').addEventListener('click',clear);
- el('radarMapToggle').addEventListener('change',e=>{enabled=e.target.checked;if(!enabled)seen.clear();el('radarMapCaption').hidden=!enabled;lastAngle=null;});
+ el('radarLocate').addEventListener('click',()=>map.flyTo(ORIGIN,Math.max(7,map.getZoom()),{duration:.6}));
+ el('radarMapToggle').addEventListener('change',e=>{enabled=e.target.checked;machine.getElement()?.classList.toggle('is-off',!enabled);el('radarMapCaption').hidden=!enabled;lastAngle=null;if(!enabled){snapshots.clear();ctx.clearRect(0,0,width,height);}});
  window.addEventListener('atlas:language',updateLanguage);
- window.addEventListener('atlas:game-reset',()=>{clear();smoothTime=game.getTime();lastAngle=null;lastTime=smoothTime;});
+ window.addEventListener('atlas:game-reset',()=>{clear();smoothTime=game.getTime();lastTime=smoothTime;lastAngle=null;});
  if('ResizeObserver'in window)new ResizeObserver(resize).observe(el('mapWrap'));
  window.addEventListener('resize',resize);
- map.on('resize moveend zoomend',()=>{if(!el('mapWrap'))return;render();});
- resize();updateLanguage();requestAnimationFrame(animation);
- window.ATLAS_RADAR={spawn,clear,count:()=>items.length,snapshotCount:()=>seen.size,redraw:render,getOrigin:()=>({...ORIGIN}),getOriginPoint:()=>{const p=originPoint();return {x:p.x,y:p.y};}};
+ // The animation loop redraws during pan; avoid additional work on every move event.
+ map.on('resize zoomend',()=>render(smoothTime));
+ resize();updateLanguage();requestAnimationFrame(animate);
+ window.ATLAS_RADAR={spawn:()=>createItem(),clear,count:()=>items.length,snapshotCount:()=>snapshots.size,redraw:render,getOrigin:()=>({lat:ORIGIN.lat,lng:ORIGIN.lng}),getOriginPoint:()=>{const p=center();return{x:p.x,y:p.y};},getKinds:()=>kinds.map(({id,uk,ru})=>({id,uk,ru}))};
 })();

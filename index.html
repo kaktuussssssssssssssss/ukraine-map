@@ -8,10 +8,10 @@
   <title>ATLAS UA — Мапа України</title>
   <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="./leaflet-core.css?v=1.8">
-  <link rel="stylesheet" href="./style.css?v=1.8">
-  <link rel="stylesheet" href="./game.css?v=1.8">
-  <link rel="stylesheet" href="./radar.css?v=1.8">
+  <link rel="stylesheet" href="./leaflet-core.css?v=1.9">
+  <link rel="stylesheet" href="./style.css?v=1.9">
+  <link rel="stylesheet" href="./game.css?v=1.9">
+  <link rel="stylesheet" href="./radar.css?v=1.9">
 </head>
 <body>
   <svg xmlns="http://www.w3.org/2000/svg" class="svg-defs" aria-hidden="true">
@@ -58,14 +58,23 @@
             <div class="sim-speed"><span id="simSpeedLabel">Швидкість</span><div class="sim-speed-buttons" role="group" aria-label="Швидкість часу"><button class="selected" data-speed="1" type="button">1×</button><button data-speed="2" type="button">2×</button><button data-speed="3" type="button">3×</button><button data-speed="4" type="button">4×</button><button data-speed="5" type="button">5×</button></div></div>
             <div class="sim-multi-help" id="simMultiHelp">⌃ Ctrl + клік — обрати кілька районів. Кнопки рівнів застосовуються до всіх.</div>
             <details class="radar-panel" id="radarPanel" open>
-              <summary><span id="radarHeading">РАДАР НА МАПІ</span><span id="radarBadge">МОДУЛЬ 03</span></summary>
-              <div class="radar-map-description"><span class="radar-live-led"></span><strong id="radarSpinLabel">СКАНУВАННЯ НА ВСЮ МАПУ · 4 С / 1×</strong></div>
+              <summary><span id="radarHeading">РАДАРНА МАШИНА</span><span id="radarBadge">МОДУЛЬ 03</span></summary>
+              <div class="radar-map-description"><span class="radar-live-led"></span><strong id="radarSpinLabel">ГЕОПРИВ’ЯЗКА · 4 С / 1×</strong></div>
               <div class="radar-map-subline" id="radarSweepLabel">Мітки з'являються після проходу променя та поступово згасають.</div>
               <div class="radar-status-card"><span id="radarTargetsLabel">УМОВНІ ЦІЛІ</span><strong id="radarObjectCount">0</strong><span id="radarVisibleLabel">Видно після сканування</span></div>
               <div class="radar-actions"><button id="radarSpawn" type="button">＋ <span id="radarSpawnLabel">Створити навчальну мітку</span></button><button id="radarClear" type="button"><span id="radarClearLabel">Очистити</span></button></div>
-              <label class="radar-map-toggle"><input type="checkbox" id="radarMapToggle" checked><span id="radarShowMapLabel">Радар на всю мапу</span></label>
+              <label class="radar-map-toggle"><input type="checkbox" id="radarMapToggle" checked><span id="radarShowMapLabel">Показувати сканер на мапі</span></label>
               <p class="radar-note" id="radarNote">Вигадані навчальні цілі. Жодних реальних координат польоту чи прогнозів.</p>
             </details>
+            <section class="object-studio" aria-labelledby="radarStudioTitle">
+              <div class="object-heading"><span class="object-studio-led"></span><strong id="radarStudioTitle">РЕДАКТОР ОБ’ЄКТІВ</strong><span>МОДУЛЬ 04</span></div>
+              <label class="object-label" for="radarKind" id="radarKindLabel">ТИП ПОЗНАЧКИ</label>
+              <div class="object-kind"><span id="radarKindIcon" class="object-kind-preview"></span><select id="radarKind" aria-label="Тип навчальної позначки"></select></div>
+              <div class="object-editor-actions"><button id="radarPlace" type="button" aria-pressed="false">⊕ <span id="radarPlaceLabel">Поставити на мапі</span></button><button id="radarLocate" type="button">⌖ <span id="radarLocateLabel">Знайти радарну машину</span></button></div>
+              <p class="object-help" id="objectHelp">Позначки мають вигадані параметри та не розраховують маршрути.</p>
+              <div class="object-list-header"><strong id="radarListTitle">СТВОРЕНІ ОБ’ЄКТИ</strong><small id="radarObjectHint">Умовні силуети</small></div>
+              <ul id="radarObjectList" class="object-list"></ul>
+            </section>
             <div class="scenario-threat-picker">
               <label for="scenarioThreat" id="scenarioThreatLabel">ТИП ІГРОВОЇ ПОДІЇ</label>
               <select id="scenarioThreat" aria-describedby="scenarioThreatHelp">
@@ -104,7 +113,7 @@
           <div class="note"><span class="note-pip"></span><span id="noteText">Крим, Донецька й Луганська області — у складі України. Мапа демонстраційна.</span></div>
           </div>
         </div>
-        <div class="side-footer"><span class="footer-logo">A<span>/</span>UA</span><div><strong>MAP ENGINE</strong><small id="stageText">ЕТАП 1.8 · РАДАР У КООРДИНАТАХ</small></div><span class="build-version">1.8</span></div>
+        <div class="side-footer"><span class="footer-logo">A<span>/</span>UA</span><div><strong>MAP ENGINE</strong><small id="stageText">ЕТАП 1.9 · РАДАРНА МАШИНА</small></div><span class="build-version">1.9</span></div>
       </aside>
       <section class="map-wrap" id="mapWrap" aria-label="Мапа України та сусідніх територій">
         <div id="map"></div>
@@ -120,8 +129,8 @@
     <dialog class="sim-confirm" id="simConfirm"><form method="dialog"><div class="sim-confirm-icon">↺</div><h2 id="confirmTitle">Скинути симуляцію?</h2><p id="confirmDetail">Усі ігрові тривоги будуть вимкнені.</p><div class="sim-confirm-actions"><button type="submit" value="cancel" id="confirmCancel">Скасувати</button><button type="submit" value="reset" class="destructive" id="confirmAccept">Скинути</button></div></form></dialog>
   </div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="./app.js?v=1.8"></script>
-  <script src="./game.js?v=1.8"></script>
-  <script src="./radar.js?v=1.8"></script>
+  <script src="./app.js?v=1.9"></script>
+  <script src="./game.js?v=1.9"></script>
+  <script src="./radar.js?v=1.9"></script>
 </body>
 </html>
