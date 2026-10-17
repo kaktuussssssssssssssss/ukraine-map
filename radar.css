@@ -42,13 +42,13 @@
 @media(max-width:800px){.radar-map-caption{left:11px;top:55px}}
 
 /* ATLAS UA 1.9: compact machine-centered world scanner and object studio */
-.scanner-leaflet-icon{background:none;border:none;overflow:visible!important;pointer-events:auto}
-.scanner-machine{position:relative;width:90px;height:90px;display:grid;place-items:center;filter:drop-shadow(0 6px 9px #081e2780)}
-.scanner-machine svg{width:90px;height:90px;position:relative;z-index:2;overflow:visible}
-.scanner-machine-pulse{position:absolute;left:45px;top:49px;transform:translate(-50%,-50%);height:64px;width:64px;border:1px solid #4fe8a94d;border-radius:50%;box-shadow:0 0 0 10px #53c69e14;pointer-events:none}
+.scanner-leaflet-icon{background:none!important;border:none!important;overflow:visible!important;pointer-events:auto}
+.scanner-machine{position:relative;width:44px;height:44px;display:grid;place-items:center;filter:drop-shadow(0 3px 6px #081e2760)}
+.scanner-machine svg{width:44px;height:44px;position:relative;z-index:2;overflow:visible;display:block}
+.scanner-machine-pulse{position:absolute;left:22px;top:23px;transform:translate(-50%,-50%);height:26px;width:26px;border:1px solid #4fe8a947;border-radius:50%;box-shadow:0 0 0 5px #53c69e14;pointer-events:none}
+.scanner-machine--compact{transform:none!important}
 .scanner-dish{transform-box:fill-box;transform-origin:center;animation:machine-dish var(--sweep-period,4s) linear infinite}
 @keyframes machine-dish{to{transform:rotate(360deg)}}
-.scanner-machine-label{position:absolute;z-index:4;left:50%;top:76px;transform:translateX(-50%);border-radius:4px;padding:3px 5px;background:#092830ea;border:1px solid #39866c;color:#b9fbe0;font:800 8px system-ui;letter-spacing:.06em;white-space:nowrap}
 .is-off .scanner-machine{opacity:.35;filter:grayscale(1)}.is-off .scanner-dish{animation-play-state:paused}
 .radar-world-overlay{z-index:440;pointer-events:none!important}
 .radar-map-caption{color:#a5f4ce;border-color:#285b49;background:#0a2825e6}

@@ -29,20 +29,17 @@
  const lang=()=>api.getLanguage()==='uk'?'uk':'ru';
  const text=(uk,ru)=>lang()==='uk'?uk:ru;
  function iconMarkup(kind){return `<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" stroke="currentColor" stroke-width=".4">${kind.shape}</svg>`;}
- const machineHTML=`<div class="scanner-machine" aria-label="Навчальна радарна машина">
+ const machineHTML=`<div class="scanner-machine scanner-machine--compact" aria-label="Навчальна радарна машина">
   <span class="scanner-machine-pulse"></span>
-  <svg viewBox="0 0 90 90" role="img" aria-hidden="true">
-   <ellipse cx="45" cy="73" rx="29" ry="7" fill="#001b21" opacity=".5"/>
-   <rect x="15" y="35" width="61" height="33" rx="7" fill="#101c25" stroke="#154e54" stroke-width="2"/>
-   <path d="M25 41h41v24H25z" fill="#49666b" stroke="#98b4a0" stroke-width="1.4"/>
-   <path d="M30 42h31v21H30z" fill="#203b37"/><rect x="25" y="27" width="41" height="12" rx="3" fill="#63857b" stroke="#c8e4c0" stroke-width="1.3"/>
-   <rect x="20" y="26" width="7" height="13" rx="2" fill="#1a2b34"/><rect x="64" y="26" width="7" height="13" rx="2" fill="#1a2b34"/>
-   <rect x="20" y="64" width="9" height="10" rx="2" fill="#0a1219"/><rect x="62" y="64" width="9" height="10" rx="2" fill="#0a1219"/>
-   <rect x="38" y="42" width="15" height="19" rx="3" fill="#172b32" stroke="#81bdb2"/>
-   <g class="scanner-dish"><path d="M43 44V21" stroke="#a6e9c8" stroke-width="2.8"/><path d="M24 20q20-17 41 0l-21 13Z" fill="#90c6ac" stroke="#19493c" stroke-width="2"/><path d="M30 20h31" stroke="#c4f3d3" stroke-width="2"/><circle cx="44" cy="33" r="3" fill="#6bf1bb"/></g>
-   <circle cx="45" cy="51" r="2" fill="#64ecba"/>
-  </svg><span class="scanner-machine-label">RLS · DEMO</span></div>`;
- const machine=L.marker(ORIGIN,{icon:L.divIcon({className:'scanner-leaflet-icon',html:machineHTML,iconSize:[90,90],iconAnchor:[45,53]}),keyboard:false,zIndexOffset:1900,interactive:true}).addTo(map);
+  <svg viewBox="0 0 48 48" role="img" aria-hidden="true">
+   <ellipse cx="24" cy="38" rx="12" ry="3.4" fill="#001118" opacity=".42"/>
+   <rect x="9" y="20" width="30" height="12" rx="4" fill="#13242c" stroke="#21515a" stroke-width="1.5"/>
+   <rect x="13" y="16" width="22" height="7" rx="2.4" fill="#5c7d78" stroke="#bce9cb" stroke-width="1"/>
+   <rect x="12" y="32" width="6" height="5" rx="1.3" fill="#0a1218"/><rect x="30" y="32" width="6" height="5" rx="1.3" fill="#0a1218"/>
+   <rect x="20" y="22" width="8" height="8" rx="2" fill="#173138" stroke="#79baab" stroke-width=".8"/>
+   <g class="scanner-dish"><path d="M24 21V9" stroke="#aff2cf" stroke-width="1.9"/><path d="M13 10q11-8 22 0l-11 7Z" fill="#90c6ac" stroke="#20493d" stroke-width="1.4"/><path d="M17 10h14" stroke="#c8f4d6" stroke-width="1.2"/><circle cx="24" cy="17" r="1.6" fill="#6bf1bb"/></g>
+  </svg></div>`;
+ const machine=L.marker(ORIGIN,{icon:L.divIcon({className:'scanner-leaflet-icon',html:machineHTML,iconSize:[44,44],iconAnchor:[22,22]}),keyboard:false,zIndexOffset:1900,interactive:true}).addTo(map);
  machine.bindTooltip(text('Навчальна радарна машина · вигадана позиція','Учебная радарная машина · вымышленная позиция'),{direction:'top',offset:[0,-29],className:'district-tooltip'});
  function resize(){
   const rect=el('mapWrap').getBoundingClientRect();width=Math.max(1,Math.floor(rect.width));height=Math.max(1,Math.floor(rect.height));
